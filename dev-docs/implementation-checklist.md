@@ -1,11 +1,19 @@
 # Multi-Instance Implementation Checklist
 
+## Overview
+
+This checklist implements the simplified multi-instance design:
+- **One new flag**: `--new-instance`
+- **No new commands**: Registry cleanup folded into `stop`
+- **Self-healing**: Automatic orphan cleanup
+- **Invisible registry**: Internal implementation detail only
+
 ## Prerequisites
 
-- [x] Feature branch created: `feat/multi-instance`
-- [x] Output folder added to `.git/info/exclude`
-- [ ] Review analysis document
-- [ ] Confirm implementation approach
+- [x] Feature branch created: `multi-instance-dev`
+- [x] Dev docs folder created: `dev-docs/`
+- [ ] Review simplified analysis document
+- [ ] Confirm simplified implementation approach
 
 ## Phase 1: Port-Specific PID/Log Files
 
@@ -27,12 +35,10 @@
     - [ ] When `new_instance === true`, pass port to PID/log functions
     - [ ] When `new_instance === false`, use default behavior (no port)
   - [ ] Update `handleStop(options)` to accept optional port parameter
-  - [ ] Update `handleRestart(options)` to accept `new_instance` flag
 
 - [ ] **`server/cli/index.js`**
   - [ ] Add `--new-instance` flag parsing in `parseArgs()`
   - [ ] Pass `new_instance` flag to `handleStart()` options
-  - [ ] Pass `new_instance` flag to `handleRestart()` options
 
 ### Tests
 
@@ -72,9 +78,13 @@
 
 - [ ] **`server/cli/commands.js`**
   - [ ] Import instance registry functions
-  - [ ] Update `handleStart()` to register instance when `new_instance === true`
-  - [ ] Update `handleStop()` to unregister instance when port-specific
-  - [ ] Add `cleanStaleInstances()` call at start of each command
+  - [ ] Update `handleStart()` to:
+    - [ ] Register instance when `new_instance === true`
+    - [ ] Silently clean up orphaned instance for current workspace (if exists)
+  - [ ] Update `handleStop()` to:
+    - [ ] **Always** unregister instance (whether process is running or not)
+    - [ ] Remove PID file
+    - [ ] No error if process is already dead (self-healing)
 
 ### Tests
 
@@ -101,126 +111,70 @@
 - [ ] Manual test: Stop instance, verify registry entry removed
 - [ ] Manual test: Kill process manually, verify stale cleanup works
 
-## Phase 3: Enhanced Restart Command
+## Phase 3: Smart Restart Command
 
 ### Code Changes
 
 - [ ] **`server/cli/commands.js`**
   - [ ] Update `handleRestart(options)` logic:
-    - [ ] If `new_instance === true` and `port` specified, restart that port
-    - [ ] If `new_instance === true` and no port, find instance for current workspace
-    - [ ] If `new_instance === false`, use default behavior (global instance)
-  - [ ] Add helper function `findInstanceToRestart(workspace, port)`
+    - [ ] If `port` specified, restart that specific port
+    - [ ] Otherwise, check if instance exists for current workspace
+    - [ ] If workspace instance found, restart that
+    - [ ] Otherwise, fall back to default behavior (global instance)
+  - [ ] Restart = stop (which unregisters) + start (which re-registers)
+  - [ ] **No `--new-instance` flag needed** - automatically detects context!
 
 ### Tests
 
 - [ ] **`server/cli/commands.integration.test.js`**
-  - [ ] Test restart without `--new-instance` restarts global instance
-  - [ ] Test restart with `--new-instance --port 3000` restarts port 3000
-  - [ ] Test restart with `--new-instance` (no port) finds workspace instance
-  - [ ] Test restart when no instance found returns error
+  - [ ] Test `restart` with workspace instance → restarts workspace instance
+  - [ ] Test `restart` without workspace instance → restarts global instance
+  - [ ] Test `restart --port 3000` → restarts specific port
+  - [ ] Test backward compatibility: existing restart behavior unchanged
 
 ### Verification
 
 - [ ] Run integration tests: `npm test`
-- [ ] Manual test: Start instance on port 3000, restart it, verify same port
-- [ ] Manual test: Start instance, cd to workspace, restart without port, verify works
+- [ ] Manual test: Start instance with `--new-instance`, then `restart` (no flags) → works
+- [ ] Manual test: Start global instance, then `restart` → works
+- [ ] Manual test: Verify registry entry is updated with new PID after restart
 
-## Phase 4: Remove Instance Command
+## Phase 4: Testing & Documentation
 
-### Code Changes
+### Comprehensive Testing
 
-- [ ] **`server/cli/commands.js`**
-  - [ ] Create `handleRemoveInstance(options)` function
-    - [ ] Accept `{ port?: number, force?: boolean, cleanup_orphans?: boolean }`
-    - [ ] If no port: find instance for current workspace
-    - [ ] If port specified: find instance by port
-    - [ ] If force: skip process running check
-    - [ ] If cleanup_orphans: remove all dead instances
-    - [ ] Remove registry entry
-    - [ ] Remove PID file if exists
-    - [ ] Show confirmation message
+- [ ] **Unit Tests**
+  - [ ] Test port-specific PID/log file paths
+  - [ ] Test instance registry CRUD operations
+  - [ ] Test registry corruption handling (graceful fallback)
+  - [ ] Test atomic writes (temp file + rename)
+  - [ ] Test `stop` always cleans up registry
+  - [ ] Test `start` silently cleans up orphans
+  - [ ] Test restart with workspace detection
 
-- [ ] **`server/cli/index.js`**
-  - [ ] Add `remove-instance` command parsing
-  - [ ] Add `--force` flag parsing
-  - [ ] Add `--cleanup-orphans` flag parsing
-  - [ ] Dispatch to `handleRemoveInstance()`
+- [ ] **Integration Tests**
+  - [ ] Test multi-instance lifecycle (start, stop, restart)
+  - [ ] Test backward compatibility (no `--new-instance` flag)
+  - [ ] Test orphan cleanup after process kill
+  - [ ] Test orphan cleanup after system reboot simulation
+  - [ ] Test port conflicts
+  - [ ] Test concurrent instance operations
 
-- [ ] **`server/cli/instance-registry.js`**
-  - [ ] Add `getAllOrphanedInstances()` - returns instances with dead processes
-  - [ ] Add `removeInstanceByWorkspace(workspace)` - remove by workspace path
-  - [ ] Add `removeInstanceByPort(port)` - remove by port
-
-### Tests
-
-- [ ] **`server/cli/commands-mi.test.js`**
-  - [ ] Test `handleRemoveInstance()` removes instance for current workspace
-  - [ ] Test `handleRemoveInstance({ port: 3000 })` removes by port
-  - [ ] Test `handleRemoveInstance({ force: true })` removes even if running
-  - [ ] Test `handleRemoveInstance({ cleanup_orphans: true })` removes all orphans
-  - [ ] Test error when instance not found
-  - [ ] Test error when trying to remove running instance without --force
-
-- [ ] **`server/cli/instance-registry.test.js`**
-  - [ ] Test `getAllOrphanedInstances()` finds dead processes
-  - [ ] Test `removeInstanceByWorkspace()` removes correct entry
-  - [ ] Test `removeInstanceByPort()` removes correct entry
-
-### Verification
-
-- [ ] Run unit tests: `npm test`
-- [ ] Manual test: Register instance, remove it, verify registry cleaned
-- [ ] Manual test: Remove with --force, verify works even if process dead
-- [ ] Manual test: Remove with --cleanup-orphans, verify all orphans removed
-
-## Phase 5: Orphan Detection on Start
-
-### Code Changes
-
-- [ ] **`server/cli/commands.js`**
-  - [ ] Update `handleStart(options)` to detect orphans
-    - [ ] Before starting, check if instance exists for workspace
-    - [ ] If exists and process is dead, show warning
-    - [ ] Auto-cleanup orphaned instance
-    - [ ] Continue with normal start
-  - [ ] Add helper function `detectAndCleanOrphan(workspace)`
-
-- [ ] **`server/cli/instance-registry.js`**
-  - [ ] Add `isInstanceOrphaned(instance)` - check if process is dead
-  - [ ] Update `cleanStaleInstances()` to return list of cleaned instances
-
-### Tests
-
-- [ ] **`server/cli/commands.integration.test.js`**
-  - [ ] Test start detects orphaned instance and cleans it up
-  - [ ] Test start shows warning message for orphan
-  - [ ] Test start continues normally after cleanup
-  - [ ] Test start with no orphan works normally
-
-### Verification
-
-- [ ] Run integration tests: `npm test`
-- [ ] Manual test: Register instance, kill process, start again, verify cleanup
-- [ ] Manual test: Verify warning message is clear and helpful
-- [ ] Manual test: After reboot, start instances, verify orphan cleanup
-
-## Phase 6: Documentation and Polish
+- [ ] **Edge Cases**
+  - [ ] Registry file missing (create new)
+  - [ ] Registry file corrupted (fallback to empty)
+  - [ ] PID file exists but process dead (clean up)
+  - [ ] Multiple instances on different ports
+  - [ ] Stop instance that's already stopped (no error)
 
 ### Documentation
 
 - [ ] Update `README.md` with `--new-instance` flag documentation
-- [ ] Update `README.md` with `remove-instance` command documentation
-- [ ] Update `server/cli/usage.js` with new flags and commands in help text
+- [ ] Update `server/cli/usage.js` with new flag in help text
 - [ ] Add examples to README showing multi-instance usage
-- [ ] Add examples showing orphan cleanup workflow
-- [ ] Document instance registry file location and format
-
-### Additional Features (Optional)
-
-- [ ] Add `bdui list` command to show all running instances
-- [ ] Add `bdui stop --all` to stop all instances
-- [ ] Add `bdui stop --port <port>` to stop specific instance
+- [ ] Document that registry is an internal implementation detail
+- [ ] Add migration guide (if needed)
+- [ ] Update any existing documentation that mentions single-instance behavior
 
 ### Final Verification
 
@@ -229,9 +183,14 @@
 - [ ] Run linter: `npm run lint`
 - [ ] Run prettier: `npm run prettier:write`
 - [ ] Manual end-to-end test: Full multi-instance workflow
-- [ ] Manual end-to-end test: Orphan detection and cleanup
-- [ ] Manual end-to-end test: Remove instance scenarios
+- [ ] Manual end-to-end test: Orphan cleanup after reboot
 - [ ] Test backward compatibility: Verify existing workflows unchanged
+- [ ] Test on clean system (no existing PID files or registry)
+
+### Additional Features (Optional - Future Enhancements)
+
+- [ ] Add `bdui list` command to show all running instances
+- [ ] Add `bdui stop --all` to stop all instances
 
 ## Pull Request Preparation
 
@@ -239,13 +198,27 @@
 - [ ] Squash commits if needed for clean history
 - [ ] Write comprehensive PR description
 - [ ] Include before/after examples
+- [ ] Highlight simplifications (no new commands, self-healing design)
 - [ ] List breaking changes (should be none)
 - [ ] Request review from maintainer
 
+## Success Criteria
+
+- ✅ Multiple instances run independently on different ports
+- ✅ Each instance serves one workspace
+- ✅ Instances survive across terminal sessions (daemon mode)
+- ✅ `stop` always cleans up registry (self-healing)
+- ✅ `start` silently handles orphans (no user intervention)
+- ✅ Backward compatibility maintained (existing workflows unchanged)
+- ✅ Registry is invisible to users (internal implementation detail)
+- ✅ All tests pass (unit, integration, manual)
+- ✅ Documentation is clear and concise
+
 ## Notes
 
-- Keep backward compatibility as top priority
+- **Keep backward compatibility as top priority**
+- **Registry is an internal implementation detail** — users never interact with it
+- **Self-healing design** — `stop` always cleans up, `start` silently handles orphans
 - Add comprehensive tests for each phase
 - Document any edge cases discovered during implementation
 - Consider adding debug logging for troubleshooting
-
