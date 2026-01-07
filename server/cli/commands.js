@@ -48,7 +48,7 @@ export async function handleStart(options) {
       } else {
         // Instance is still running - stop it first, then start new one
         console.log('Stopping existing instance on port %d', existing.port);
-        const stopped = await terminateProcess(existing.pid);
+        const stopped = await terminateProcess(existing.pid, 5000);
         if (stopped) {
           removePidFile(existing.port);
           unregisterInstance(existing.port);
@@ -208,18 +208,45 @@ export async function handleStop(options) {
  */
 /**
  * Handle `restart` command: stop (ignore not-running) then start.
+ * Smart restart logic:
+ * - If --port specified, restart that specific port
+ * - Otherwise, check if workspace instance exists and restart that
+ * - Otherwise, restart global instance (default behavior)
  * Accepts the same options as `handleStart` and passes them through,
  * so restart only opens a browser when `open` is explicitly true.
  *
- * @param {{ open?: boolean }} [options]
+ * @param {{ open?: boolean, port?: number, new_instance?: boolean }} [options]
  * @returns {Promise<number>}
  */
-export async function handleRestart(options) {
-  const stop_code = await handleStop();
+export async function handleRestart(options = {}) {
+  let port_to_restart = options.port;
+
+  // If no port specified, check if there's a workspace instance
+  if (!port_to_restart) {
+    cleanStaleInstances();
+    const workspace_instance = findInstanceByWorkspace(process.cwd());
+    if (workspace_instance) {
+      port_to_restart = workspace_instance.port;
+      console.log(`Restarting workspace instance on port ${port_to_restart}`);
+    }
+  }
+
+  // Stop the instance (either specific port or default)
+  const stop_code = await handleStop({ port: port_to_restart });
   // 0 = stopped, 2 = not running; both are acceptable to proceed
   if (stop_code !== 0 && stop_code !== 2) {
     return 1;
   }
-  const start_code = await handleStart(options);
+
+  // Start the instance
+  // If we found a workspace instance, start with --new-instance to re-register
+  const start_options = { ...options };
+  if (port_to_restart && !options.port) {
+    // We're restarting a workspace instance (auto-detected)
+    start_options.new_instance = true;
+    start_options.port = port_to_restart;
+  }
+
+  const start_code = await handleStart(start_options);
   return start_code === 0 ? 0 : 1;
 }

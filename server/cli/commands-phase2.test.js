@@ -162,7 +162,7 @@ describe('handleStart with new_instance flag (Phase 2)', () => {
     await handleStart({ new_instance: true, open: false });
 
     // Should terminate the existing process
-    expect(terminate_spy).toHaveBeenCalledWith(88888);
+    expect(terminate_spy).toHaveBeenCalledWith(88888, 5000);
     // Should unregister the old instance
     expect(unregister_spy).toHaveBeenCalledWith(3002);
   });
