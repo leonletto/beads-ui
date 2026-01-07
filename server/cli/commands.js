@@ -31,10 +31,8 @@ export async function handleStart(options) {
   const new_instance = options?.new_instance === true;
   let port = options?.port;
 
-  // Clean up stale instances before starting
-  cleanStaleInstances();
-
-  // Check for orphaned instance for current workspace
+  // Check for orphaned instance for current workspace BEFORE cleaning stale instances
+  // This allows us to reuse the port from the orphaned instance
   if (new_instance) {
     const cwd = process.cwd();
     const orphan = findInstanceByWorkspace(cwd);
@@ -58,6 +56,9 @@ export async function handleStart(options) {
       }
     }
   }
+
+  // Clean up stale instances after checking for orphans
+  cleanStaleInstances();
 
   // Auto port selection if no port specified
   if (!port) {

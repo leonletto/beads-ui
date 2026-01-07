@@ -138,9 +138,10 @@ This checklist implements the simplified multi-instance design:
 - [x] Run unit tests: `npm test`
 - [x] Run type checks: `npm run tsc`
 - [x] Run linter: `npm run lint`
-- [ ] Manual test: Start instance, verify registry entry created
-- [ ] Manual test: Stop instance, verify registry entry removed
-- [ ] Manual test: Kill process manually, verify stale cleanup works
+- [x] Manual test: Start instance, verify registry entry created
+- [x] Manual test: Stop instance, verify registry entry removed
+- [x] Manual test: Orphaned instance detection and port reuse works
+- [x] Playwright test: UI loads correctly on new instance port
 
 ## Phase 3: Smart Restart Command
 
