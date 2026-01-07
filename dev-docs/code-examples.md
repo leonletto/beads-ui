@@ -3,6 +3,7 @@
 ## Overview
 
 This document contains code examples for the simplified multi-instance design:
+
 - **One new flag**: `--new-instance`
 - **No new commands**: Registry cleanup folded into `stop`
 - **Self-healing**: Automatic orphan cleanup
@@ -130,18 +131,18 @@ export async function findAvailablePort(start_port) {
 export function startDaemon(options) {
   const port = options?.port;
   const log_file = getLogFilePath(port);
-  
+
   // ... existing daemon spawn logic ...
-  
+
   const child = spawn(process.execPath, args, {
     detached: true,
     stdio: ['ignore', log_fd, log_fd],
     env: process.env
   });
-  
+
   child.unref();
   writePidFile(child.pid, port);
-  
+
   return { pid: child.pid };
 }
 ```
@@ -213,7 +214,6 @@ export function parseArgs(args) {
 /**
  * @import { InstanceEntry } from './instance-registry.types.js'
  */
-
 import fs from 'node:fs';
 import path from 'node:path';
 import { getRuntimeDir } from './daemon.js';
@@ -354,7 +354,7 @@ export interface InstanceEntry {
 ### `server/cli/commands.js` - Updated Stop Handler
 
 ```javascript
-import { unregisterInstance, findInstanceByPort } from './instance-registry.js';
+import { findInstanceByPort, unregisterInstance } from './instance-registry.js';
 
 /**
  * Handle `stop` command. Always cleans up both process AND registry entry.
@@ -406,13 +406,13 @@ export async function handleStop(options) {
 ### `server/cli/commands.js` - Updated Start Handler
 
 ```javascript
-import {
-  registerInstance,
-  findInstanceByWorkspace,
-  unregisterInstance,
-  isProcessRunning
-} from './instance-registry.js';
 import { findAvailablePort } from './daemon.js';
+import {
+  findInstanceByWorkspace,
+  isProcessRunning,
+  registerInstance,
+  unregisterInstance
+} from './instance-registry.js';
 
 /**
  * Handle `start` command with silent orphan cleanup and auto port selection.
@@ -430,7 +430,8 @@ export async function handleStart(options) {
     if (new_instance) {
       // For new instance, start from 3001 if global instance is on 3000
       const global_pid = readPidFile();
-      const start_port = (global_pid && isProcessRunning(global_pid)) ? 3001 : 3000;
+      const start_port =
+        global_pid && isProcessRunning(global_pid) ? 3001 : 3000;
       port = await findAvailablePort(start_port);
     } else {
       // For global instance, start from 3000
@@ -722,7 +723,8 @@ export function printUsage(out_stream) {
 1. **No `remove-instance` command** - Registry cleanup folded into `stop`
 2. **No `--force` flag** - `stop` works whether process is running or not
 3. **No `--cleanup-orphans` flag** - Cleanup happens automatically and silently
-4. **No `--new-instance` flag for restart** - Automatically detects workspace instance
+4. **No `--new-instance` flag for restart** - Automatically detects workspace
+   instance
 5. **No `--port` required** - Auto-selects available port intelligently
 6. **Registry is invisible** - Users never interact with it directly
 7. **Self-healing design** - System "just works" without user intervention

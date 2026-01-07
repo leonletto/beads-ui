@@ -1,10 +1,12 @@
 # Multi-Instance Feature - Development Documentation
 
-This directory contains comprehensive planning and analysis documents for the multi-instance feature.
+This directory contains comprehensive planning and analysis documents for the
+multi-instance feature.
 
 ## Documents
 
 ### 1. [diagrams.md](./diagrams.md)
+
 **Visual architecture and flow diagrams**
 
 - Multi-instance architecture overview
@@ -13,6 +15,7 @@ This directory contains comprehensive planning and analysis documents for the mu
 - Usage flow examples with system responses
 
 ### 2. [multi-instance-analysis.md](./multi-instance-analysis.md)
+
 **Comprehensive feasibility analysis and design document**
 
 - Current architecture overview
@@ -23,15 +26,18 @@ This directory contains comprehensive planning and analysis documents for the mu
 - Recommended implementation order
 
 **Key Findings:**
+
 - ✅ **Feasibility: HIGH** - Implementation is straightforward
 - ⚙️ **Complexity: MEDIUM** - ~100 lines changed, ~120 lines added
 - 🛡️ **Risk: LOW-MEDIUM** - Fully backward compatible
 - ⏱️ **Estimated Time: 6-9 hours**
 
 ### 3. [implementation-checklist.md](./implementation-checklist.md)
+
 **Detailed step-by-step implementation checklist**
 
 Organized into phases:
+
 - **Phase 1**: Port-specific PID/log files
 - **Phase 2**: Instance registry
 - **Phase 3**: Enhanced restart command
@@ -41,14 +47,17 @@ Organized into phases:
 - **Phase 7**: Testing & verification
 
 Each phase includes:
+
 - Code changes required
 - Tests to write
 - Verification steps
 
 ### 4. [code-examples.md](./code-examples.md)
+
 **Code snippets and implementation examples**
 
 Contains:
+
 - Example implementations for each phase
 - JSDoc type annotations
 - Usage examples (single vs multi-instance)
@@ -56,9 +65,11 @@ Contains:
 - Unit test examples
 
 ### 5. [SUMMARY.md](./SUMMARY.md)
+
 **Executive summary of the complete feature**
 
 Comprehensive overview including:
+
 - Core requirements (multi-instance, remove-instance, orphan detection)
 - Implementation phases with time estimates
 - Key design decisions
@@ -71,13 +82,15 @@ Comprehensive overview including:
 
 1. **Review the diagrams**: Start with `diagrams.md` for visual overview
 2. **Read the summary**: Check `SUMMARY.md` for complete feature overview
-3. **Review the analysis**: Read `multi-instance-analysis.md` to understand the design
+3. **Review the analysis**: Read `multi-instance-analysis.md` to understand the
+   design
 4. **Follow the checklist**: Use `implementation-checklist.md` as your guide
 5. **Reference examples**: Copy/adapt code from `code-examples.md`
 
 ## Architecture Diagrams
 
 See `diagrams.md` for detailed visual diagrams including:
+
 - Multi-instance architecture overview (current vs. proposed)
 - Remove instance and orphan detection flows
 - Instance registry data structure
@@ -86,34 +99,40 @@ See `diagrams.md` for detailed visual diagrams including:
 ## Key Design Decisions
 
 ### 1. Backward Compatibility First
+
 - Default behavior unchanged (single global instance)
 - `--new-instance` is opt-in flag
 - Existing workflows continue to work
 
 ### 2. Port-Specific PID Files
+
 - `server.pid` → default (backward compatible)
 - `server-3000.pid` → port-specific (new)
 - `daemon.log` → default
 - `daemon-3000.log` → port-specific (new)
 
 ### 3. Instance Registry
+
 - New file: `~/.beads-ui/instances.json`
 - Tracks: workspace path, port, PID, start time
 - Enables intelligent restart: "restart the instance for this workspace"
 - Automatic cleanup of stale entries
 
 ### 4. Enhanced Restart
+
 - Without `--new-instance`: restart global instance (current behavior)
 - With `--new-instance --port 3000`: restart specific port
 - With `--new-instance` (no port): auto-detect from workspace
 
 ### 5. Remove Instance Command
+
 - `bdui remove-instance`: Remove instance for current workspace
 - `bdui remove-instance --port 3000 --force`: Force remove by port
 - `bdui remove-instance --cleanup-orphans`: Clean up all orphaned instances
 - Safety checks prevent removing running instances without `--force`
 
 ### 6. Orphan Detection
+
 - Automatic detection on `bdui start --new-instance`
 - Clear warning messages with helpful instructions
 - Auto-cleanup of orphaned instances
@@ -122,6 +141,7 @@ See `diagrams.md` for detailed visual diagrams including:
 ## Usage Examples
 
 ### Current Behavior (Unchanged)
+
 ```bash
 cd ~/project-a
 bdui start --open              # Start on port 3000
@@ -134,6 +154,7 @@ bdui stop                      # Stop global instance
 ```
 
 ### New Multi-Instance Behavior
+
 ```bash
 cd ~/project-a
 bdui start --port 3000 --new-instance --open
@@ -151,6 +172,7 @@ bdui remove-instance --cleanup-orphans    # Clean up all orphans
 ```
 
 ### Orphan Detection Example
+
 ```bash
 # After system reboot, all instances are orphaned
 cd ~/project-a
@@ -171,12 +193,14 @@ bdui start --new-instance
 ## Testing Strategy
 
 ### Unit Tests
+
 - Port-specific PID/log file paths
 - Instance registry CRUD operations
 - Stale instance cleanup
 - Command flag parsing
 
 ### Integration Tests
+
 - Multi-instance lifecycle (start, stop, restart)
 - Remove instance scenarios
 - Orphan detection and cleanup
@@ -184,6 +208,7 @@ bdui start --new-instance
 - Edge cases (port conflicts, stale PIDs, registry corruption)
 
 ### Manual Testing
+
 - Full workflow with 2+ instances
 - Verify isolation between instances
 - Test restart intelligence
@@ -193,16 +218,16 @@ bdui start --new-instance
 
 ## Implementation Timeline
 
-| Phase | Description | Estimated Time |
-|-------|-------------|----------------|
-| 1 | Port-specific PID/log files | 1-2 hours |
-| 2 | Instance registry | 2-3 hours |
-| 3 | Enhanced restart | 1-2 hours |
-| 4 | Remove instance command | 1 hour |
-| 5 | Orphan detection | 1 hour |
-| 6 | Documentation & polish | 1 hour |
-| 7 | Testing & verification | 1-2 hours |
-| **Total** | | **8-12 hours** |
+| Phase     | Description                 | Estimated Time |
+| --------- | --------------------------- | -------------- |
+| 1         | Port-specific PID/log files | 1-2 hours      |
+| 2         | Instance registry           | 2-3 hours      |
+| 3         | Enhanced restart            | 1-2 hours      |
+| 4         | Remove instance command     | 1 hour         |
+| 5         | Orphan detection            | 1 hour         |
+| 6         | Documentation & polish      | 1 hour         |
+| 7         | Testing & verification      | 1-2 hours      |
+| **Total** |                             | **8-12 hours** |
 
 ## Next Steps
 
@@ -219,12 +244,14 @@ bdui start --new-instance
 ## Questions & Decisions
 
 ### Resolved
+
 - ✅ Use `--new-instance` flag (not `--independent` or `--isolated`)
 - ✅ Port-specific PID files (not workspace-specific)
 - ✅ Instance registry approach (not PID file scanning)
 - ✅ Backward compatibility is mandatory
 
 ### Open
+
 - ⬜ Should `bdui stop` without args stop all instances or just default?
 - ⬜ Should we add `bdui list` command to show all instances?
 - ⬜ Should we add `bdui stop --all` to stop all instances?
@@ -234,4 +261,3 @@ bdui start --new-instance
 - This directory (`/output`) is excluded from git via `.git/info/exclude`
 - All planning documents are for internal use during development
 - Final documentation will be added to README.md and help text
-

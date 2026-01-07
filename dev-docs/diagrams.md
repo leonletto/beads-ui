@@ -1,10 +1,12 @@
 # Multi-Instance Feature - Architecture Diagrams
 
-This document contains visual diagrams illustrating the multi-instance feature design.
+This document contains visual diagrams illustrating the multi-instance feature
+design.
 
 ## 1. Multi-Instance Architecture Overview
 
-This diagram shows the current single-instance architecture compared to the proposed multi-instance architecture.
+This diagram shows the current single-instance architecture compared to the
+proposed multi-instance architecture.
 
 ```mermaid
 graph TB
@@ -16,24 +18,24 @@ graph TB
         C5 --> C6[Workspace A]
         C5 --> C7[Workspace B]
     end
-    
+
     subgraph "Proposed (Multi-Instance)"
         P1[bdui start --new-instance<br/>--port 3000] --> P2[daemon.js port=3000]
         P2 --> P3[server-3000.pid]
         P2 --> P4[daemon-3000.log]
         P2 --> P5[Server on :3000]
         P5 --> P6[Workspace A]
-        
+
         P7[bdui start --new-instance<br/>--port 8080] --> P8[daemon.js port=8080]
         P8 --> P9[server-8080.pid]
         P8 --> P10[daemon-8080.log]
         P8 --> P11[Server on :8080]
         P11 --> P12[Workspace B]
-        
+
         P13[Instance Registry<br/>instances.json] -.-> P2
         P13 -.-> P8
     end
-    
+
     style C5 fill:#42a5f5
     style P5 fill:#66bb6a
     style P11 fill:#66bb6a
@@ -41,6 +43,7 @@ graph TB
 ```
 
 **Key Changes:**
+
 - Port-specific PID and log files enable true isolation
 - Instance registry tracks all running instances
 - Each instance serves one workspace independently
@@ -48,7 +51,8 @@ graph TB
 
 ## 2. Remove Instance and Orphan Detection Flows
 
-This diagram shows the detailed logic flows for the new remove-instance command and orphan detection feature.
+This diagram shows the detailed logic flows for the new remove-instance command
+and orphan detection feature.
 
 ```mermaid
 graph TB
@@ -67,7 +71,7 @@ graph TB
         RM10 --> RM11[Remove PID file]
         RM11 --> RM12[Success message]
     end
-    
+
     subgraph "Orphan Detection Flow"
         ST1[bdui start<br/>--new-instance] --> ST2{Instance exists<br/>for workspace?}
         ST2 -->|No| ST3[Normal start]
@@ -79,7 +83,7 @@ graph TB
         ST8 --> ST9[Continue with start]
         ST9 --> ST3
     end
-    
+
     subgraph "Cleanup Orphans Flow"
         CL1[bdui remove-instance<br/>--cleanup-orphans] --> CL2[Get all instances]
         CL2 --> CL3[Filter dead processes]
@@ -89,7 +93,7 @@ graph TB
         CL6 --> CL7[Remove each orphan]
         CL7 --> CL8[Success: N cleaned]
     end
-    
+
     style RM6 fill:#ef5350
     style RM8 fill:#ef5350
     style ST5 fill:#ef5350
@@ -101,14 +105,17 @@ graph TB
 ```
 
 **Key Features:**
+
 - **Remove Instance**: Supports removal by workspace or port with safety checks
 - **Orphan Detection**: Automatic cleanup on start with clear warnings
 - **Batch Cleanup**: `--cleanup-orphans` flag removes all dead instances at once
-- **Safety First**: Prevents accidental removal of running instances without `--force`
+- **Safety First**: Prevents accidental removal of running instances without
+  `--force`
 
 ## 3. Instance Registry Data Structure
 
-The instance registry (`~/.beads-ui/instances.json`) tracks all running instances:
+The instance registry (`~/.beads-ui/instances.json`) tracks all running
+instances:
 
 ```json
 [
@@ -128,6 +135,7 @@ The instance registry (`~/.beads-ui/instances.json`) tracks all running instance
 ```
 
 **Registry Operations:**
+
 - `registerInstance()` - Add new instance on start
 - `unregisterInstance()` - Remove instance on stop
 - `findInstanceByWorkspace()` - Lookup by workspace path
@@ -188,4 +196,3 @@ bdui remove-instance \              → Finds all orphaned instances
                                     → Removes all orphans
                                     → Shows count cleaned
 ```
-

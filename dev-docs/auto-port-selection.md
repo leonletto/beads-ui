@@ -2,7 +2,9 @@
 
 ## Overview
 
-Both `bdui start` and `bdui start --new-instance` automatically find available ports, eliminating the need for users to manually specify ports or deal with port conflicts.
+Both `bdui start` and `bdui start --new-instance` automatically find available
+ports, eliminating the need for users to manually specify ports or deal with
+port conflicts.
 
 ## How It Works
 
@@ -28,6 +30,7 @@ Both `bdui start` and `bdui start --new-instance` automatically find available p
 ### Explicit Port (Optional)
 
 Users can still specify a port explicitly:
+
 ```bash
 bdui start --port 8080 --new-instance
 ```
@@ -85,31 +88,31 @@ bdui start --new-instance
  */
 export async function findAvailablePort(start_port) {
   const net = await import('node:net');
-  
+
   for (let i = 0; i < 10; i++) {
     const port = start_port + i;
-    
+
     // Try to create a server on this port
     const is_available = await new Promise((resolve) => {
       const server = net.createServer();
-      
+
       server.once('error', () => {
         resolve(false);
       });
-      
+
       server.once('listening', () => {
         server.close();
         resolve(true);
       });
-      
+
       server.listen(port);
     });
-    
+
     if (is_available) {
       return port;
     }
   }
-  
+
   return null;
 }
 ```
@@ -140,7 +143,8 @@ export async function handleStart(options) {
       // If no orphan or port not available, find a new port
       if (!port) {
         const global_pid = readPidFile();
-        const start_port = (global_pid && isProcessRunning(global_pid)) ? 3001 : 3000;
+        const start_port =
+          global_pid && isProcessRunning(global_pid) ? 3001 : 3000;
         port = await findAvailablePort(start_port);
         console.log('Using port %d', port);
       }
@@ -205,5 +209,6 @@ bdui start --port 3000 --new-instance
 
 ## Summary
 
-Auto port selection makes the multi-instance workflow seamless and frustration-free. Users can focus on their work instead of managing port numbers!
-
+Auto port selection makes the multi-instance workflow seamless and
+frustration-free. Users can focus on their work instead of managing port
+numbers!

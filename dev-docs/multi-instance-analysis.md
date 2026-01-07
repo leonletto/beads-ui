@@ -2,23 +2,32 @@
 
 ## Executive Summary
 
-**Goal**: Enable running multiple independent beads-ui server instances on different ports, each serving a different workspace.
+**Goal**: Enable running multiple independent beads-ui server instances on
+different ports, each serving a different workspace.
 
-**Current State**: Single global instance on port 3000, shared across all workspaces.
+**Current State**: Single global instance on port 3000, shared across all
+workspaces.
 
-**Proposed Solution**: Add `--new-instance` flag to enable port-specific instances with isolated PID files and an instance registry (internal implementation detail).
+**Proposed Solution**: Add `--new-instance` flag to enable port-specific
+instances with isolated PID files and an instance registry (internal
+implementation detail).
 
-**Feasibility**: ✅ **HIGH** - Implementation is straightforward with minimal risk.
+**Feasibility**: ✅ **HIGH** - Implementation is straightforward with minimal
+risk.
 
-**Complexity**: ⚙️ **MEDIUM** - ~80 lines changed, ~150 lines added across 4 files.
+**Complexity**: ⚙️ **MEDIUM** - ~80 lines changed, ~150 lines added across 4
+files.
 
-**Risk**: 🛡️ **LOW** - Fully backward compatible, opt-in feature, registry is invisible to users.
+**Risk**: 🛡️ **LOW** - Fully backward compatible, opt-in feature, registry is
+invisible to users.
 
 **Estimated Time**: ⏱️ **5-7 hours** including testing and documentation.
 
 ## Overview
 
-This document analyzes the feasibility and implementation complexity of adding a `--new-instance` flag to enable running multiple independent beads-ui servers on different ports.
+This document analyzes the feasibility and implementation complexity of adding a
+`--new-instance` flag to enable running multiple independent beads-ui servers on
+different ports.
 
 ## Current Architecture
 
@@ -26,17 +35,21 @@ This document analyzes the feasibility and implementation complexity of adding a
 
 The current implementation enforces a single daemon instance through:
 
-1. **Global PID file**: `~/.beads-ui/server.pid` (or `$XDG_RUNTIME_DIR/beads-ui/server.pid`)
+1. **Global PID file**: `~/.beads-ui/server.pid` (or
+   `$XDG_RUNTIME_DIR/beads-ui/server.pid`)
 2. **Global log file**: `~/.beads-ui/daemon.log`
-3. **Idempotent start**: When `bdui start` detects an existing PID, it registers the workspace with the running server instead of starting a new instance
+3. **Idempotent start**: When `bdui start` detects an existing PID, it registers
+   the workspace with the running server instead of starting a new instance
 
 ### Key Components
 
 - **`server/cli/daemon.js`**: PID/log file management, daemon spawning
-- **`server/cli/commands.js`**: `handleStart()`, `handleStop()`, `handleRestart()` command handlers
+- **`server/cli/commands.js`**: `handleStart()`, `handleStop()`,
+  `handleRestart()` command handlers
 - **`server/cli/index.js`**: CLI argument parsing and command dispatch
 - **`server/config.js`**: Runtime configuration (host, port, paths)
-- **`server/registry-watcher.js`**: Workspace registration (in-memory + file-based)
+- **`server/registry-watcher.js`**: Workspace registration (in-memory +
+  file-based)
 
 ## Proposed Design: `--new-instance` Flag
 
@@ -58,6 +71,7 @@ bdui start --port 8080 --new-instance  # Starts independent server on 8080
 ### Backward Compatibility
 
 ✅ **Fully backward compatible**
+
 - Without `--new-instance`: existing behavior (single global instance)
 - With `--new-instance`: new behavior (port-specific instances)
 
@@ -76,7 +90,8 @@ bdui start --port 8080 --new-instance  # Starts independent server on 8080
    - Keep default behavior when port is not specified (backward compatible)
 
 2. **`server/cli/commands.js`**
-   - Update `handleStart()` to pass port to PID/log file functions when `new_instance` flag is set
+   - Update `handleStart()` to pass port to PID/log file functions when
+     `new_instance` flag is set
    - Update `handleStop()` to accept port parameter
    - Update `handleRestart()` to accept port parameter
 
@@ -108,15 +123,18 @@ export function getLogFilePath(port) {
 #### Purpose
 
 The instance registry is an **internal implementation detail** that enables:
+
 - Intelligent restart: "restart the instance for this workspace"
 - Automatic cleanup on stop (no orphaned registry entries)
 - Silent orphan detection and cleanup on start
 
-**Users never interact with the registry directly** — it's managed automatically by `start`, `stop`, and `restart` commands.
+**Users never interact with the registry directly** — it's managed automatically
+by `start`, `stop`, and `restart` commands.
 
 #### Registry Structure
 
 Create `~/.beads-ui/instances.json`:
+
 ```json
 [
   {
@@ -137,6 +155,7 @@ Create `~/.beads-ui/instances.json`:
 #### New Module: `server/cli/instance-registry.js`
 
 Functions needed:
+
 - `readInstanceRegistry()`: Read and parse instances.json
 - `writeInstanceRegistry(instances)`: Write instances.json atomically
 - `registerInstance(workspace, port, pid)`: Add/update instance entry
@@ -168,7 +187,8 @@ Functions needed:
 
 #### Key Design Decision
 
-**`stop` always cleans up everything** — both the process AND the registry entry.
+**`stop` always cleans up everything** — both the process AND the registry
+entry.
 
 #### Behavior
 
@@ -185,11 +205,13 @@ Functions needed:
    - Remove registry entry
 ```
 
-This makes the system **self-healing** — users never see "stale instance" errors.
+This makes the system **self-healing** — users never see "stale instance"
+errors.
 
 #### Changes Required
 
 **`server/cli/commands.js`**:
+
 - Modify `handleStop()` to always call `unregisterInstance(port)` after stopping
 - No error if process is already dead (just clean up silently)
 
@@ -200,6 +222,7 @@ This makes the system **self-healing** — users never see "stale instance" erro
 #### Behavior (Smart Context Detection)
 
 The `restart` command automatically detects context:
+
 1. If `--port` specified → restart that specific port
 2. Otherwise, check if instance exists for current workspace → restart that
 3. Otherwise → fall back to default behavior (global instance)
@@ -209,21 +232,23 @@ The `restart` command automatically detects context:
 #### Changes Required
 
 **`server/cli/commands.js`**:
+
 - Modify `handleRestart()` to check registry for current workspace
 - Auto-detect port from workspace if found
 - Fall back to default behavior if no workspace instance found
 
 ## Implementation Complexity Summary
 
-| Phase | Component | Lines Changed | Lines Added | Difficulty | Risk |
-|-------|-----------|---------------|-------------|------------|------|
-| 1 | Port-specific PID/log | ~30 | ~10 | LOW | LOW |
-| 2 | Instance registry (internal) | ~20 | ~80 | MEDIUM | LOW |
-| 3 | Enhanced stop (self-healing) | ~20 | ~10 | LOW | LOW |
-| 4 | Enhanced restart logic | ~30 | ~20 | MEDIUM | LOW |
-| **Total** | | **~100** | **~120** | **MEDIUM** | **LOW** |
+| Phase     | Component                    | Lines Changed | Lines Added | Difficulty | Risk    |
+| --------- | ---------------------------- | ------------- | ----------- | ---------- | ------- |
+| 1         | Port-specific PID/log        | ~30           | ~10         | LOW        | LOW     |
+| 2         | Instance registry (internal) | ~20           | ~80         | MEDIUM     | LOW     |
+| 3         | Enhanced stop (self-healing) | ~20           | ~10         | LOW        | LOW     |
+| 4         | Enhanced restart logic       | ~30           | ~20         | MEDIUM     | LOW     |
+| **Total** |                              | **~100**      | **~120**    | **MEDIUM** | **LOW** |
 
 **Key Simplifications:**
+
 - No `remove-instance` command (registry cleanup folded into `stop`)
 - No `--force` flag (stop always cleans up, whether process is running or not)
 - No `--cleanup-orphans` flag (cleanup happens automatically)
@@ -269,26 +294,30 @@ The `restart` command automatically detects context:
 ## Risks and Mitigations
 
 ### Risk 1: Port Conflicts
-**Scenario**: User tries to start instance on already-bound port
-**Mitigation**: Server startup will fail with clear error message (existing behavior)
+
+**Scenario**: User tries to start instance on already-bound port **Mitigation**:
+Server startup will fail with clear error message (existing behavior)
 
 ### Risk 2: Orphaned Instances
-**Scenario**: Instance crashes, registry not cleaned up
-**Mitigation**:
+
+**Scenario**: Instance crashes, registry not cleaned up **Mitigation**:
+
 - `stop` always cleans up registry, even if process is dead (self-healing)
 - `start` silently cleans up orphaned instances for the current workspace
 - No user intervention required
 
 ### Risk 3: Registry Corruption
-**Scenario**: instances.json becomes corrupted
-**Mitigation**:
+
+**Scenario**: instances.json becomes corrupted **Mitigation**:
+
 - Atomic writes with temp file + rename
 - Graceful fallback to empty registry on parse error
 - Log warnings for manual intervention
 
 ### Risk 4: Backward Compatibility Break
-**Scenario**: Existing users' workflows break
-**Mitigation**:
+
+**Scenario**: Existing users' workflows break **Mitigation**:
+
 - Default behavior unchanged (no `--new-instance` = single instance)
 - Comprehensive integration tests
 - Clear migration guide in PR
@@ -319,8 +348,11 @@ The `restart` command automatically detects context:
 **Requirement**: Add ability to remove instance registry entries
 
 **Use Cases**:
-- **Clean removal**: `bdui remove-instance` in workspace directory removes that instance
-- **Force removal by port**: `bdui remove-instance --port 3000 --force` removes instance even if files are gone
+
+- **Clean removal**: `bdui remove-instance` in workspace directory removes that
+  instance
+- **Force removal by port**: `bdui remove-instance --port 3000 --force` removes
+  instance even if files are gone
 - **Orphan cleanup**: Detect and warn about orphaned instances on `bdui start`
 
 **Design**:
@@ -343,10 +375,12 @@ bdui remove-instance --cleanup-orphans
    - If no `--port`: Find instance for current workspace, remove it
    - If `--port` specified: Remove instance for that port
    - If `--force`: Skip process running check, just remove registry entry
-   - If `--cleanup-orphans`: Scan registry, remove all entries with dead processes
+   - If `--cleanup-orphans`: Scan registry, remove all entries with dead
+     processes
 
 2. **Orphan Detection on Start**:
-   - When `bdui start --new-instance` runs, check if registry has entry for this workspace
+   - When `bdui start --new-instance` runs, check if registry has entry for this
+     workspace
    - If entry exists but process is dead, show warning:
      ```
      Warning: Found orphaned instance for this workspace (port 3000, PID 12345 not running)
@@ -403,7 +437,8 @@ No warning needed — the system just works.
 
 ## Open Questions
 
-1. **Should `bdui stop` without `--port` stop all instances or just the default?**
+1. **Should `bdui stop` without `--port` stop all instances or just the
+   default?**
    - ✅ **RESOLVED**: Stop only the default instance (backward compatible)
    - Future: Could add `bdui stop --all` for stopping all instances
 
@@ -419,15 +454,19 @@ No warning needed — the system just works.
 4. **How to handle workspace switching in the UI with multiple instances?**
    - Current: UI has workspace picker for single server
    - With multi-instance: Each instance serves one workspace
-   - ✅ **RESOLVED**: Keep current behavior, document that multi-instance = one workspace per server
+   - ✅ **RESOLVED**: Keep current behavior, document that multi-instance = one
+     workspace per server
 
 ## Conclusion
 
 **Feasibility: HIGH** ✅
 
-The proposed `--new-instance` feature is **highly feasible** with **medium complexity** and **low risk**. The implementation is well-scoped and maintains full backward compatibility.
+The proposed `--new-instance` feature is **highly feasible** with **medium
+complexity** and **low risk**. The implementation is well-scoped and maintains
+full backward compatibility.
 
 **Key Success Factors:**
+
 - Port-specific PID/log files enable independent instances
 - Instance registry (internal detail) enables intelligent restart behavior
 - Self-healing design: `stop` always cleans up, `start` silently handles orphans
@@ -494,28 +533,33 @@ Following code review feedback, the design was simplified significantly:
 ### Smart Restart Behavior
 
 The `restart` command automatically detects context:
+
 1. If `--port` specified → restart that specific port
 2. Otherwise, check if instance exists for current workspace → restart that
 3. Otherwise → fall back to default behavior (global instance)
 
-**No `--new-instance` flag needed for restart!** Just `bdui restart` and it works.
+**No `--new-instance` flag needed for restart!** Just `bdui restart` and it
+works.
 
 ### Auto Port Selection
 
 Both `start` and `start --new-instance` automatically find available ports:
 
 **For global instance (`bdui start`):**
+
 - Tries port 3000 first
 - If taken, tries 3001, 3002, etc. (up to 10 ports)
 - Shows "Using port XXXX" message
 
 **For new instance (`bdui start --new-instance`):**
+
 - If global instance is on 3000, starts from 3001
 - Otherwise starts from 3000
 - Tries consecutive ports until one is available
 - Shows "Using port XXXX" message
 
 **Benefits:**
+
 - No manual port management needed
 - No port conflicts
 - Works seamlessly after system reboot

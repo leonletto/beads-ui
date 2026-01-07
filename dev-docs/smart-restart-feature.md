@@ -2,14 +2,16 @@
 
 ## Overview
 
-The `restart` command has been enhanced with **automatic context detection** to provide the best user experience. No `--new-instance` flag needed!
+The `restart` command has been enhanced with **automatic context detection** to
+provide the best user experience. No `--new-instance` flag needed!
 
 ## How It Works
 
 When you run `bdui restart`, the system automatically:
 
 1. **If `--port` specified** → Restart that specific port
-2. **Otherwise, check current workspace** → If instance exists for workspace, restart that
+2. **Otherwise, check current workspace** → If instance exists for workspace,
+   restart that
 3. **Otherwise** → Fall back to default behavior (restart global instance)
 
 ## User Experience
@@ -53,7 +55,7 @@ bdui restart --port 3000  # ✅ Restarts port 3000 instance
 export async function handleRestart(options) {
   let port = options?.port;
   let new_instance = false;
-  
+
   // If no port specified, try to find instance for current workspace
   if (!port) {
     const cwd = process.cwd();
@@ -66,10 +68,10 @@ export async function handleRestart(options) {
     }
     // Otherwise, fall back to default behavior (global instance)
   }
-  
+
   // Stop (which unregisters if port-specific)
   await handleStop({ port });
-  
+
   // Start (which re-registers if new_instance)
   return await handleStart({
     ...options,
@@ -89,11 +91,11 @@ export async function handleRestart(options) {
 
 ## Comparison
 
-| Scenario | Before (Original Design) | After (Smart Restart) |
-|----------|-------------------------|----------------------|
-| Restart workspace instance | `bdui restart --new-instance` | `bdui restart` ✅ |
-| Restart global instance | `bdui restart` | `bdui restart` ✅ |
-| Restart specific port | `bdui restart --new-instance --port 3000` | `bdui restart --port 3000` ✅ |
+| Scenario                   | Before (Original Design)                  | After (Smart Restart)         |
+| -------------------------- | ----------------------------------------- | ----------------------------- |
+| Restart workspace instance | `bdui restart --new-instance`             | `bdui restart` ✅             |
+| Restart global instance    | `bdui restart`                            | `bdui restart` ✅             |
+| Restart specific port      | `bdui restart --new-instance --port 3000` | `bdui restart --port 3000` ✅ |
 
 ## Testing
 
@@ -123,7 +125,9 @@ bdui restart --port 3000  # Should restart port 3000 instance
 
 ## Summary
 
-The smart restart feature makes the multi-instance workflow feel natural and intuitive. Users don't need to remember special flags - the system just works based on context!
+The smart restart feature makes the multi-instance workflow feel natural and
+intuitive. Users don't need to remember special flags - the system just works
+based on context!
 
-**Key Principle:** The tool should be smart enough to do the right thing based on context, without requiring the user to specify extra flags.
-
+**Key Principle:** The tool should be smart enough to do the right thing based
+on context, without requiring the user to specify extra flags.

@@ -4,7 +4,8 @@
 
 ## Overview
 
-This document summarizes the final simplified design for the multi-instance feature, incorporating all feedback and refinements.
+This document summarizes the final simplified design for the multi-instance
+feature, incorporating all feedback and refinements.
 
 ## Core Principles
 
@@ -45,8 +46,10 @@ bdui start --new-instance
 ```
 
 **How it works:**
+
 - Global instance: Tries 3000, then 3001, 3002, etc.
-- New instance: First tries to reuse orphan's port, then starts from 3001 if global is on 3000
+- New instance: First tries to reuse orphan's port, then starts from 3001 if
+  global is on 3000
 - Tries up to 10 consecutive ports
 - Users can still specify `--port` explicitly if desired
 
@@ -65,6 +68,7 @@ bdui restart
 ```
 
 **How it works:**
+
 1. If `--port` specified → restart that port
 2. Otherwise, check if instance exists for workspace → restart that
 3. Otherwise → restart global instance (backward compatible)
@@ -93,15 +97,15 @@ bdui start --new-instance
 
 ## Implementation Complexity
 
-| Metric | Value |
-|--------|-------|
-| **New Commands** | 0 |
-| **New Flags** | 1 (`--new-instance`) |
-| **Lines Added** | ~150 |
-| **Lines Changed** | ~120 |
-| **Implementation Phases** | 4 + testing |
-| **Estimated Time** | 6-8 hours |
-| **Risk Level** | LOW |
+| Metric                    | Value                |
+| ------------------------- | -------------------- |
+| **New Commands**          | 0                    |
+| **New Flags**             | 1 (`--new-instance`) |
+| **Lines Added**           | ~150                 |
+| **Lines Changed**         | ~120                 |
+| **Implementation Phases** | 4 + testing          |
+| **Estimated Time**        | 6-8 hours            |
+| **Risk Level**            | LOW                  |
 
 ## Implementation Phases
 
@@ -213,7 +217,8 @@ bdui restart
 
 ## Summary
 
-The final design achieves maximum simplicity while providing powerful multi-instance capabilities:
+The final design achieves maximum simplicity while providing powerful
+multi-instance capabilities:
 
 - **One flag** (`--new-instance`)
 - **Zero new commands**
@@ -221,5 +226,5 @@ The final design achieves maximum simplicity while providing powerful multi-inst
 - **Self-healing** (automatic cleanup)
 - **Invisible complexity** (registry hidden)
 
-**Result:** A feature that "just works" without requiring users to understand implementation details! 🎉
-
+**Result:** A feature that "just works" without requiring users to understand
+implementation details! 🎉

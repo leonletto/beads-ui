@@ -55,13 +55,17 @@ bdui stop                    # Stops workspace instance if exists
 
 **Key Features:**
 
-- 🔢 **Auto port selection** – Automatically finds available ports starting from 3001
+- 🔢 **Auto port selection** – Automatically finds available ports starting from
+  3001
 - 🎯 **Workspace-aware** – Each instance is tied to its workspace directory
-- 🔄 **Smart restart** – `restart` automatically detects and restarts workspace instances
+- 🔄 **Smart restart** – `restart` automatically detects and restarts workspace
+  instances
 - 🧹 **Self-healing** – Automatically cleans up orphaned instances
-- ⏮️ **Backward compatible** – Existing workflows unchanged (no `--new-instance` = global instance)
+- ⏮️ **Backward compatible** – Existing workflows unchanged (no `--new-instance`
+  = global instance)
 
-**Note:** The global instance (without `--new-instance`) continues to work as before on port 3000.
+**Note:** The global instance (without `--new-instance`) continues to work as
+before on port 3000.
 
 ## Screenshots
 

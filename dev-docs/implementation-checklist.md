@@ -3,6 +3,7 @@
 ## Overview
 
 This checklist implements the simplified multi-instance design:
+
 - **One new flag**: `--new-instance`
 - **No new commands**: Registry cleanup folded into `stop`
 - **Self-healing**: Automatic orphan cleanup
@@ -37,8 +38,10 @@ This checklist implements the simplified multi-instance design:
 
 - [x] **`server/cli/commands.js`**
   - [x] Update `handleStart(options)` to accept `new_instance` flag
-    - [x] **Auto port selection**: If no port specified, call `findAvailablePort(3000)`
-    - [x] For `new_instance === true`: Start from port 3001 if global instance on 3000
+    - [x] **Auto port selection**: If no port specified, call
+          `findAvailablePort(3000)`
+    - [x] For `new_instance === true`: Start from port 3001 if global instance
+          on 3000
     - [x] For `new_instance === false`: Start from port 3000 (default)
     - [x] When `new_instance === true`, pass port to PID/log functions
     - [x] When `new_instance === false`, use default behavior (no port)
@@ -61,8 +64,10 @@ This checklist implements the simplified multi-instance design:
 
 - [x] **`server/cli/commands-phase1.test.js`**
   - [x] Test `handleStart()` without `new_instance` uses default PID file
-  - [x] Test `handleStart({ new_instance: true })` auto-selects port 3001 if 3000 taken
-  - [x] Test `handleStart({ new_instance: true, port: 3000 })` uses specified port
+  - [x] Test `handleStart({ new_instance: true })` auto-selects port 3001 if
+        3000 taken
+  - [x] Test `handleStart({ new_instance: true, port: 3000 })` uses specified
+        port
   - [x] Test `handleStart()` auto-selects port if 3000 is taken (global mode)
   - [x] Test backward compatibility: existing behavior unchanged
 
@@ -71,8 +76,10 @@ This checklist implements the simplified multi-instance design:
 - [x] Run unit tests: `npm test`
 - [x] Run type checks: `npm run tsc`
 - [x] Run linter: `npm run lint`
-- [x] Manual test: Start server without `--new-instance`, verify default behavior
-- [x] Manual test: Start server with `--new-instance` from different folder, verify port-specific files
+- [x] Manual test: Start server without `--new-instance`, verify default
+      behavior
+- [x] Manual test: Start server with `--new-instance` from different folder,
+      verify port-specific files
 
 ## Phase 2: Instance Registry
 
@@ -117,7 +124,8 @@ This checklist implements the simplified multi-instance design:
   - [x] Test `cleanStaleInstances()` keeps alive processes
 
 - [x] **`server/cli/commands-phase2.test.js`** (NEW FILE)
-  - [x] Test `handleStart()` uses port-specific PID file when `new_instance` is true
+  - [x] Test `handleStart()` uses port-specific PID file when `new_instance` is
+        true
   - [x] Test `handleStart()` uses default PID file when `new_instance` is false
   - [x] Test `handleStart()` starts from port 3001 when global instance running
   - [x] Test `handleStart()` reuses port from orphaned instance
@@ -126,12 +134,14 @@ This checklist implements the simplified multi-instance design:
   - [x] Test `handleStop()` uses port-specific PID file when port specified
   - [x] Test `handleStop()` uses default PID file when no port specified
   - [x] Test `handleStop()` unregisters instance from registry
-  - [x] Test `handleStop()` unregisters even when process not running (self-healing)
+  - [x] Test `handleStop()` unregisters even when process not running
+        (self-healing)
 
 - [x] **Updated existing tests**
   - [x] Updated `commands.unit.test.js` for self-healing behavior
   - [x] Updated `commands.integration.test.js` for self-healing behavior
-  - [x] Removed `commands-phase1.test.js` (functionality covered by phase2 tests)
+  - [x] Removed `commands-phase1.test.js` (functionality covered by phase2
+        tests)
 
 ### Verification
 
@@ -170,7 +180,8 @@ This checklist implements the simplified multi-instance design:
 ### Verification
 
 - [x] Run all tests: `npm test` (81 tests pass)
-- [x] Manual test: Start instance with `--new-instance`, then `restart` (no flags) → works
+- [x] Manual test: Start instance with `--new-instance`, then `restart` (no
+      flags) → works
 - [x] Manual test: Start global instance, then `restart` → works
 - [x] Manual test: Verify registry entry is updated with new PID after restart
 
@@ -252,8 +263,10 @@ This checklist implements the simplified multi-instance design:
 ## Notes
 
 - **Keep backward compatibility as top priority**
-- **Registry is an internal implementation detail** — users never interact with it
-- **Self-healing design** — `stop` always cleans up, `start` silently handles orphans
+- **Registry is an internal implementation detail** — users never interact with
+  it
+- **Self-healing design** — `stop` always cleans up, `start` silently handles
+  orphans
 - Add comprehensive tests for each phase
 - Document any edge cases discovered during implementation
 - Consider adding debug logging for troubleshooting
@@ -262,13 +275,18 @@ This checklist implements the simplified multi-instance design:
 
 ### jsdom Compatibility Issue (Fixed)
 
-**Problem:** All tests were hanging when running `npm test` (full suite). Tests would timeout after 30 seconds.
+**Problem:** All tests were hanging when running `npm test` (full suite). Tests
+would timeout after 30 seconds.
 
-**Root Cause:** Compatibility issue between jsdom 27.x and Vitest 4.x. When Vitest 4.x runs tests in the jsdom environment with jsdom version 27, the tests hang indefinitely due to breaking changes introduced in jsdom 27 that are incompatible with Vitest's environment initialization.
+**Root Cause:** Compatibility issue between jsdom 27.x and Vitest 4.x. When
+Vitest 4.x runs tests in the jsdom environment with jsdom version 27, the tests
+hang indefinitely due to breaking changes introduced in jsdom 27 that are
+incompatible with Vitest's environment initialization.
 
 **Reference:** Vitest GitHub issue #9279
 
-**Solution:** Downgraded jsdom from version 27.2.0 to version 26.x (`jsdom@^26.0.0`)
+**Solution:** Downgraded jsdom from version 27.2.0 to version 26.x
+(`jsdom@^26.0.0`)
 
 **Result:** All 69 test files (291 tests) now pass successfully without hanging.
 
@@ -276,4 +294,6 @@ This checklist implements the simplified multi-instance design:
 
 - `package.json` - Updated jsdom dependency from `^27.2.0` to `^26.0.0`
 
-**Note for PR:** This bug fix should be included in the PR as it was discovered during multi-instance development and affects the entire test suite, not just our new tests.
+**Note for PR:** This bug fix should be included in the PR as it was discovered
+during multi-instance development and affects the entire test suite, not just
+our new tests.
