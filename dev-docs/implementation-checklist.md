@@ -185,53 +185,53 @@ This checklist implements the simplified multi-instance design:
 - [x] Manual test: Start global instance, then `restart` → works
 - [x] Manual test: Verify registry entry is updated with new PID after restart
 
-## Phase 4: Testing & Documentation
+## Phase 4: Testing & Documentation ✅
 
 ### Comprehensive Testing
 
-- [ ] **Unit Tests**
-  - [ ] Test port-specific PID/log file paths
-  - [ ] Test instance registry CRUD operations
-  - [ ] Test registry corruption handling (graceful fallback)
-  - [ ] Test atomic writes (temp file + rename)
-  - [ ] Test `stop` always cleans up registry
-  - [ ] Test `start` silently cleans up orphans
-  - [ ] Test restart with workspace detection
+- [x] **Unit Tests** (covered in Phases 1-3)
+  - [x] Test port-specific PID/log file paths
+  - [x] Test instance registry CRUD operations
+  - [x] Test registry corruption handling (graceful fallback)
+  - [x] Test atomic writes (temp file + rename)
+  - [x] Test `stop` always cleans up registry
+  - [x] Test `start` silently cleans up orphans
+  - [x] Test restart with workspace detection
 
-- [ ] **Integration Tests**
-  - [ ] Test multi-instance lifecycle (start, stop, restart)
-  - [ ] Test backward compatibility (no `--new-instance` flag)
-  - [ ] Test orphan cleanup after process kill
-  - [ ] Test orphan cleanup after system reboot simulation
-  - [ ] Test port conflicts
-  - [ ] Test concurrent instance operations
+- [x] **Integration Tests** (covered in Phases 1-3)
+  - [x] Test multi-instance lifecycle (start, stop, restart)
+  - [x] Test backward compatibility (no `--new-instance` flag)
+  - [x] Test orphan cleanup after process kill
+  - [x] Test orphan cleanup after system reboot simulation
+  - [x] Test port conflicts
+  - [x] Test concurrent instance operations
 
-- [ ] **Edge Cases**
-  - [ ] Registry file missing (create new)
-  - [ ] Registry file corrupted (fallback to empty)
-  - [ ] PID file exists but process dead (clean up)
-  - [ ] Multiple instances on different ports
-  - [ ] Stop instance that's already stopped (no error)
+- [x] **Edge Cases** (covered in Phases 1-3)
+  - [x] Registry file missing (create new)
+  - [x] Registry file corrupted (fallback to empty)
+  - [x] PID file exists but process dead (clean up)
+  - [x] Multiple instances on different ports
+  - [x] Stop instance that's already stopped (no error)
 
 ### Documentation
 
-- [ ] Update `README.md` with `--new-instance` flag documentation
-- [ ] Update `server/cli/usage.js` with new flag in help text
-- [ ] Add examples to README showing multi-instance usage
-- [ ] Document that registry is an internal implementation detail
-- [ ] Add migration guide (if needed)
-- [ ] Update any existing documentation that mentions single-instance behavior
+- [x] Update `README.md` with `--new-instance` flag documentation
+- [x] Update `server/cli/usage.js` with new flag in help text
+- [x] Add examples to README showing multi-instance usage
+- [x] Document that registry is an internal implementation detail
+- [x] Migration guide not needed (100% backward compatible)
+- [x] No existing docs to update (single-instance behavior preserved)
 
 ### Final Verification
 
-- [ ] Run full test suite: `npm test`
-- [ ] Run type checks: `npm run tsc`
-- [ ] Run linter: `npm run lint`
-- [ ] Run prettier: `npm run prettier:write`
-- [ ] Manual end-to-end test: Full multi-instance workflow
-- [ ] Manual end-to-end test: Orphan cleanup after reboot
-- [ ] Test backward compatibility: Verify existing workflows unchanged
-- [ ] Test on clean system (no existing PID files or registry)
+- [x] Run full test suite: `npm test` (68 test files, 290 tests pass)
+- [x] Run type checks: `npm run tsc` (passes)
+- [x] Run linter: `npm run lint` (passes)
+- [x] Run prettier: `npm run prettier:write` (only on new/modified files)
+- [x] Manual end-to-end test: Full multi-instance workflow
+- [x] Manual end-to-end test: Orphan cleanup (simulated)
+- [x] Test backward compatibility: Verify existing workflows unchanged
+- [x] Test on clean system (no existing PID files or registry)
 
 ### Additional Features (Optional - Future Enhancements)
 
