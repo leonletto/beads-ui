@@ -135,13 +135,16 @@ This checklist implements the simplified multi-instance design:
 
 ### Verification
 
-- [x] Run unit tests: `npm test`
+- [x] Run unit tests: `npm test` (77 tests pass)
 - [x] Run type checks: `npm run tsc`
 - [x] Run linter: `npm run lint`
-- [x] Manual test: Start instance, verify registry entry created
-- [x] Manual test: Stop instance, verify registry entry removed
+- [x] Manual test: Default instance on port 3000 (not in registry)
+- [x] Manual test: New instance in beads-ui on port 3005 (in registry)
+- [x] Manual test: New instance in ../beads on port 3001 (separate workspace)
+- [x] Manual test: New instance in ../gastown on port 3002 (separate workspace)
+- [x] Manual test: Starting new instance in same workspace stops old one first
 - [x] Manual test: Orphaned instance detection and port reuse works
-- [x] Playwright test: UI loads correctly on new instance port
+- [x] Playwright test: All instances verified working on their respective ports
 
 ## Phase 3: Smart Restart Command
 
