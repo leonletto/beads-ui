@@ -150,6 +150,8 @@ Functions needed:
 1. **`handleStart()`**:
    - Register instance when starting with `--new-instance`
    - Silently clean up orphaned instance if found for this workspace
+   - use the same port if its the same workspace if the port is available
+   - if the port is not available, find another port
 
 2. **`handleStop()`**:
    - **Always** unregister instance (whether process is running or not)
@@ -497,3 +499,24 @@ The `restart` command automatically detects context:
 3. Otherwise → fall back to default behavior (global instance)
 
 **No `--new-instance` flag needed for restart!** Just `bdui restart` and it works.
+
+### Auto Port Selection
+
+Both `start` and `start --new-instance` automatically find available ports:
+
+**For global instance (`bdui start`):**
+- Tries port 3000 first
+- If taken, tries 3001, 3002, etc. (up to 10 ports)
+- Shows "Using port XXXX" message
+
+**For new instance (`bdui start --new-instance`):**
+- If global instance is on 3000, starts from 3001
+- Otherwise starts from 3000
+- Tries consecutive ports until one is available
+- Shows "Using port XXXX" message
+
+**Benefits:**
+- No manual port management needed
+- No port conflicts
+- Works seamlessly after system reboot
+- Users can still specify `--port` explicitly if desired

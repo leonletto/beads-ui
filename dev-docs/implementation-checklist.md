@@ -15,7 +15,7 @@ This checklist implements the simplified multi-instance design:
 - [ ] Review simplified analysis document
 - [ ] Confirm simplified implementation approach
 
-## Phase 1: Port-Specific PID/Log Files
+## Phase 1: Port-Specific PID/Log Files + Auto Port Selection
 
 ### Code Changes
 
@@ -29,9 +29,17 @@ This checklist implements the simplified multi-instance design:
   - [ ] Update `readPidFile(port)` to accept optional port parameter
   - [ ] Update `writePidFile(pid, port)` to accept optional port parameter
   - [ ] Update `removePidFile(port)` to accept optional port parameter
+  - [ ] Add `findAvailablePort(startPort)` helper function
+    - [ ] Check if port is available using `net.createServer()`
+    - [ ] If not available, try next port (startPort + 1, startPort + 2, etc.)
+    - [ ] Return first available port (max 10 attempts)
+    - [ ] Used by both global and new-instance modes
 
 - [ ] **`server/cli/commands.js`**
   - [ ] Update `handleStart(options)` to accept `new_instance` flag
+    - [ ] **Auto port selection**: If no port specified, call `findAvailablePort(3000)`
+    - [ ] For `new_instance === true`: Start from port 3001 if global instance on 3000
+    - [ ] For `new_instance === false`: Start from port 3000 (default)
     - [ ] When `new_instance === true`, pass port to PID/log functions
     - [ ] When `new_instance === false`, use default behavior (no port)
   - [ ] Update `handleStop(options)` to accept optional port parameter
@@ -47,10 +55,15 @@ This checklist implements the simplified multi-instance design:
   - [ ] Test `getPidFilePath(3000)` returns `server-3000.pid`
   - [ ] Test `getLogFilePath()` without port returns `daemon.log`
   - [ ] Test `getLogFilePath(8080)` returns `daemon-8080.log`
+  - [ ] Test `findAvailablePort(3000)` returns 3000 when available
+  - [ ] Test `findAvailablePort(3000)` returns 3001 when 3000 is taken
+  - [ ] Test `findAvailablePort(3000)` tries up to 10 ports
 
 - [ ] **`server/cli/commands-mi.test.js`**
   - [ ] Test `handleStart()` without `new_instance` uses default PID file
-  - [ ] Test `handleStart({ new_instance: true, port: 3000 })` uses port-specific PID file
+  - [ ] Test `handleStart({ new_instance: true })` auto-selects port 3001 if 3000 taken
+  - [ ] Test `handleStart({ new_instance: true, port: 3000 })` uses specified port
+  - [ ] Test `handleStart()` auto-selects port if 3000 is taken (global mode)
   - [ ] Test backward compatibility: existing behavior unchanged
 
 ### Verification
@@ -81,6 +94,7 @@ This checklist implements the simplified multi-instance design:
   - [ ] Update `handleStart()` to:
     - [ ] Register instance when `new_instance === true`
     - [ ] Silently clean up orphaned instance for current workspace (if exists)
+    - [ ] Use the same port if orphan found and cleaned
   - [ ] Update `handleStop()` to:
     - [ ] **Always** unregister instance (whether process is running or not)
     - [ ] Remove PID file

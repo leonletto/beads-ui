@@ -667,6 +667,8 @@ export function isInstanceOrphaned(instance) {
 /**
  * Detect and clean up orphaned instance for the current workspace.
  * Shows warning and removes the orphan from registry.
+ * Attempts to use the same port as the orphan, if available.
+ * If port is not available, falls back to automatic port selection.
  *
  * @param {string} workspace
  * @returns {InstanceEntry | null} The orphaned instance that was cleaned, or null
@@ -712,8 +714,14 @@ export async function handleStart(options) {
     const cwd = process.cwd();
     const orphan = detectAndCleanOrphan(cwd);
     if (orphan) {
-      console.log(''); // Blank line after cleanup message
+      console.log('Found orphaned instance using port %d and cleaned up.', orphan.port); 
     }
+  }
+
+  // if orphan found and cleaned, set the port to use the same port
+  if (orphan) {
+    port = orphan.port;
+    console.log('Attempting to re-use port %d of orphaned instance...', port);
   }
 
   const existing_pid = readPidFile(port);
