@@ -9,6 +9,12 @@ import {
   startDaemon,
   terminateProcess
 } from './daemon.js';
+import {
+  cleanStaleInstances,
+  findInstanceByWorkspace,
+  registerInstance,
+  unregisterInstance
+} from './instance-registry.js';
 import { openUrl, registerWorkspaceWithServer, waitForServer } from './open.js';
 
 /**
@@ -24,6 +30,34 @@ export async function handleStart(options) {
   const should_open = options?.open === true;
   const new_instance = options?.new_instance === true;
   let port = options?.port;
+
+  // Clean up stale instances before starting
+  cleanStaleInstances();
+
+  // Check for orphaned instance for current workspace
+  if (new_instance) {
+    const cwd = process.cwd();
+    const orphan = findInstanceByWorkspace(cwd);
+
+    if (orphan) {
+      // Silently clean up orphaned instance and reuse its port
+      if (!isProcessRunning(orphan.pid)) {
+        removePidFile(orphan.port);
+        unregisterInstance(orphan.port);
+        port = orphan.port;
+        console.log('Reusing port %d from orphaned instance', port);
+      } else {
+        // Instance is still running - this is the expected case
+        console.warn('Server is already running on port %d', orphan.port);
+        if (should_open) {
+          process.env.PORT = String(orphan.port);
+          const { url } = getConfig();
+          await openUrl(url);
+        }
+        return 0;
+      }
+    }
+  }
 
   // Auto port selection if no port specified
   if (!port) {
@@ -96,6 +130,16 @@ export async function handleStart(options) {
     port: port
   });
   if (started && started.pid > 0) {
+    // Register instance in registry if new_instance mode
+    if (new_instance && port) {
+      const cwd = process.cwd();
+      registerInstance({
+        workspace: cwd,
+        port: port,
+        pid: started.pid
+      });
+    }
+
     printServerUrl();
     // Auto-open the browser once for a fresh daemon start
     if (should_open) {
@@ -122,14 +166,21 @@ export async function handleStart(options) {
 export async function handleStop(options) {
   const port = options?.port;
   const existing_pid = readPidFile(port);
+
+  // Always unregister from registry (self-healing)
+  if (port) {
+    unregisterInstance(port);
+  }
+
   if (!existing_pid) {
-    return 2;
+    // No PID file found - this is OK (self-healing)
+    return 0;
   }
 
   if (!isProcessRunning(existing_pid)) {
-    // stale PID file
+    // stale PID file - clean it up
     removePidFile(port);
-    return 2;
+    return 0;
   }
 
   const terminated = await terminateProcess(existing_pid, 5000);

@@ -78,49 +78,66 @@ This checklist implements the simplified multi-instance design:
 
 ### Code Changes
 
-- [ ] **`server/cli/instance-registry.js`** (NEW FILE)
-  - [ ] Create `getRegistryPath()` - returns `~/.beads-ui/instances.json`
-  - [ ] Create `readInstanceRegistry()` - read and parse JSON, return array
-  - [ ] Create `writeInstanceRegistry(instances)` - atomic write with temp file
-  - [ ] Create `registerInstance({ workspace, port, pid })` - add/update entry
-  - [ ] Create `unregisterInstance(port)` - remove entry by port
-  - [ ] Create `findInstanceByWorkspace(workspace)` - find by workspace path
-  - [ ] Create `findInstanceByPort(port)` - find by port
-  - [ ] Create `cleanStaleInstances()` - remove entries for dead processes
-  - [ ] Add JSDoc types for all functions
+- [x] **`server/cli/instance-registry.js`** (NEW FILE)
+  - [x] Create `getRegistryPath()` - returns `~/.beads-ui/instances.json`
+  - [x] Create `readInstanceRegistry()` - read and parse JSON, return array
+  - [x] Create `writeInstanceRegistry(instances)` - atomic write with temp file
+  - [x] Create `registerInstance({ workspace, port, pid })` - add/update entry
+  - [x] Create `unregisterInstance(port)` - remove entry by port
+  - [x] Create `findInstanceByWorkspace(workspace)` - find by workspace path
+  - [x] Create `findInstanceByPort(port)` - find by port
+  - [x] Create `cleanStaleInstances()` - remove entries for dead processes
+  - [x] Add JSDoc types for all functions
 
-- [ ] **`server/cli/commands.js`**
-  - [ ] Import instance registry functions
-  - [ ] Update `handleStart()` to:
-    - [ ] Register instance when `new_instance === true`
-    - [ ] Silently clean up orphaned instance for current workspace (if exists)
-    - [ ] Use the same port if orphan found and cleaned
-  - [ ] Update `handleStop()` to:
-    - [ ] **Always** unregister instance (whether process is running or not)
-    - [ ] Remove PID file
-    - [ ] No error if process is already dead (self-healing)
+- [x] **`server/cli/commands.js`**
+  - [x] Import instance registry functions
+  - [x] Update `handleStart()` to:
+    - [x] Register instance when `new_instance === true`
+    - [x] Silently clean up orphaned instance for current workspace (if exists)
+    - [x] Use the same port if orphan found and cleaned
+  - [x] Update `handleStop()` to:
+    - [x] **Always** unregister instance (whether process is running or not)
+    - [x] Remove PID file
+    - [x] No error if process is already dead (self-healing)
 
 ### Tests
 
-- [ ] **`server/cli/instance-registry.test.js`** (NEW FILE)
-  - [ ] Test `readInstanceRegistry()` with missing file returns empty array
-  - [ ] Test `readInstanceRegistry()` with valid JSON returns parsed data
-  - [ ] Test `readInstanceRegistry()` with corrupted JSON returns empty array
-  - [ ] Test `writeInstanceRegistry()` creates file with correct structure
-  - [ ] Test `registerInstance()` adds new entry
-  - [ ] Test `registerInstance()` updates existing entry (same port)
-  - [ ] Test `unregisterInstance()` removes entry
-  - [ ] Test `findInstanceByWorkspace()` finds exact match
-  - [ ] Test `findInstanceByWorkspace()` finds parent workspace
-  - [ ] Test `findInstanceByPort()` finds by port
-  - [ ] Test `cleanStaleInstances()` removes dead processes
-  - [ ] Test `cleanStaleInstances()` keeps alive processes
+- [x] **`server/cli/instance-registry.test.js`** (NEW FILE)
+  - [x] Test `readInstanceRegistry()` with missing file returns empty array
+  - [x] Test `readInstanceRegistry()` with valid JSON returns parsed data
+  - [x] Test `readInstanceRegistry()` with corrupted JSON returns empty array
+  - [x] Test `writeInstanceRegistry()` creates file with correct structure
+  - [x] Test `registerInstance()` adds new entry
+  - [x] Test `registerInstance()` updates existing entry (same port)
+  - [x] Test `unregisterInstance()` removes entry
+  - [x] Test `findInstanceByWorkspace()` finds exact match
+  - [x] Test `findInstanceByWorkspace()` finds parent workspace
+  - [x] Test `findInstanceByPort()` finds by port
+  - [x] Test `cleanStaleInstances()` removes dead processes
+  - [x] Test `cleanStaleInstances()` keeps alive processes
+
+- [x] **`server/cli/commands-phase2.test.js`** (NEW FILE)
+  - [x] Test `handleStart()` uses port-specific PID file when `new_instance` is true
+  - [x] Test `handleStart()` uses default PID file when `new_instance` is false
+  - [x] Test `handleStart()` starts from port 3001 when global instance running
+  - [x] Test `handleStart()` reuses port from orphaned instance
+  - [x] Test `handleStart()` registers instance when `new_instance` is true
+  - [x] Test `handleStart()` does not register when `new_instance` is false
+  - [x] Test `handleStop()` uses port-specific PID file when port specified
+  - [x] Test `handleStop()` uses default PID file when no port specified
+  - [x] Test `handleStop()` unregisters instance from registry
+  - [x] Test `handleStop()` unregisters even when process not running (self-healing)
+
+- [x] **Updated existing tests**
+  - [x] Updated `commands.unit.test.js` for self-healing behavior
+  - [x] Updated `commands.integration.test.js` for self-healing behavior
+  - [x] Removed `commands-phase1.test.js` (functionality covered by phase2 tests)
 
 ### Verification
 
-- [ ] Run unit tests: `npm test`
-- [ ] Run type checks: `npm run tsc`
-- [ ] Run linter: `npm run lint`
+- [x] Run unit tests: `npm test`
+- [x] Run type checks: `npm run tsc`
+- [x] Run linter: `npm run lint`
 - [ ] Manual test: Start instance, verify registry entry created
 - [ ] Manual test: Stop instance, verify registry entry removed
 - [ ] Manual test: Kill process manually, verify stale cleanup works
