@@ -12,67 +12,67 @@ This checklist implements the simplified multi-instance design:
 
 - [x] Feature branch created: `multi-instance-dev`
 - [x] Dev docs folder created: `dev-docs/`
-- [ ] Review simplified analysis document
-- [ ] Confirm simplified implementation approach
+- [x] Review simplified analysis document
+- [x] Confirm simplified implementation approach
 
 ## Phase 1: Port-Specific PID/Log Files + Auto Port Selection
 
 ### Code Changes
 
-- [ ] **`server/cli/daemon.js`**
-  - [ ] Update `getPidFilePath(port)` to accept optional port parameter
-    - [ ] Return `server-{port}.pid` when port provided
-    - [ ] Return `server.pid` when port is null/undefined (backward compat)
-  - [ ] Update `getLogFilePath(port)` to accept optional port parameter
-    - [ ] Return `daemon-{port}.log` when port provided
-    - [ ] Return `daemon.log` when port is null/undefined (backward compat)
-  - [ ] Update `readPidFile(port)` to accept optional port parameter
-  - [ ] Update `writePidFile(pid, port)` to accept optional port parameter
-  - [ ] Update `removePidFile(port)` to accept optional port parameter
-  - [ ] Add `findAvailablePort(startPort)` helper function
-    - [ ] Check if port is available using `net.createServer()`
-    - [ ] If not available, try next port (startPort + 1, startPort + 2, etc.)
-    - [ ] Return first available port (max 10 attempts)
-    - [ ] Used by both global and new-instance modes
+- [x] **`server/cli/daemon.js`**
+  - [x] Update `getPidFilePath(port)` to accept optional port parameter
+    - [x] Return `server-{port}.pid` when port provided
+    - [x] Return `server.pid` when port is null/undefined (backward compat)
+  - [x] Update `getLogFilePath(port)` to accept optional port parameter
+    - [x] Return `daemon-{port}.log` when port provided
+    - [x] Return `daemon.log` when port is null/undefined (backward compat)
+  - [x] Update `readPidFile(port)` to accept optional port parameter
+  - [x] Update `writePidFile(pid, port)` to accept optional port parameter
+  - [x] Update `removePidFile(port)` to accept optional port parameter
+  - [x] Add `findAvailablePort(startPort)` helper function
+    - [x] Check if port is available using `net.createServer()`
+    - [x] If not available, try next port (startPort + 1, startPort + 2, etc.)
+    - [x] Return first available port (max 10 attempts)
+    - [x] Used by both global and new-instance modes
 
-- [ ] **`server/cli/commands.js`**
-  - [ ] Update `handleStart(options)` to accept `new_instance` flag
-    - [ ] **Auto port selection**: If no port specified, call `findAvailablePort(3000)`
-    - [ ] For `new_instance === true`: Start from port 3001 if global instance on 3000
-    - [ ] For `new_instance === false`: Start from port 3000 (default)
-    - [ ] When `new_instance === true`, pass port to PID/log functions
-    - [ ] When `new_instance === false`, use default behavior (no port)
-  - [ ] Update `handleStop(options)` to accept optional port parameter
+- [x] **`server/cli/commands.js`**
+  - [x] Update `handleStart(options)` to accept `new_instance` flag
+    - [x] **Auto port selection**: If no port specified, call `findAvailablePort(3000)`
+    - [x] For `new_instance === true`: Start from port 3001 if global instance on 3000
+    - [x] For `new_instance === false`: Start from port 3000 (default)
+    - [x] When `new_instance === true`, pass port to PID/log functions
+    - [x] When `new_instance === false`, use default behavior (no port)
+  - [x] Update `handleStop(options)` to accept optional port parameter
 
-- [ ] **`server/cli/index.js`**
-  - [ ] Add `--new-instance` flag parsing in `parseArgs()`
-  - [ ] Pass `new_instance` flag to `handleStart()` options
+- [x] **`server/cli/index.js`**
+  - [x] Add `--new-instance` flag parsing in `parseArgs()`
+  - [x] Pass `new_instance` flag to `handleStart()` options
 
 ### Tests
 
-- [ ] **`server/cli/daemon.test.js`**
-  - [ ] Test `getPidFilePath()` without port returns `server.pid`
-  - [ ] Test `getPidFilePath(3000)` returns `server-3000.pid`
-  - [ ] Test `getLogFilePath()` without port returns `daemon.log`
-  - [ ] Test `getLogFilePath(8080)` returns `daemon-8080.log`
-  - [ ] Test `findAvailablePort(3000)` returns 3000 when available
-  - [ ] Test `findAvailablePort(3000)` returns 3001 when 3000 is taken
-  - [ ] Test `findAvailablePort(3000)` tries up to 10 ports
+- [x] **`server/cli/daemon.test.js`**
+  - [x] Test `getPidFilePath()` without port returns `server.pid`
+  - [x] Test `getPidFilePath(3000)` returns `server-3000.pid`
+  - [x] Test `getLogFilePath()` without port returns `daemon.log`
+  - [x] Test `getLogFilePath(8080)` returns `daemon-8080.log`
+  - [x] Test `findAvailablePort(3000)` returns 3000 when available
+  - [x] Test `findAvailablePort(3000)` returns 3001 when 3000 is taken
+  - [x] Test `findAvailablePort(3000)` tries up to 10 ports
 
-- [ ] **`server/cli/commands-mi.test.js`**
-  - [ ] Test `handleStart()` without `new_instance` uses default PID file
-  - [ ] Test `handleStart({ new_instance: true })` auto-selects port 3001 if 3000 taken
-  - [ ] Test `handleStart({ new_instance: true, port: 3000 })` uses specified port
-  - [ ] Test `handleStart()` auto-selects port if 3000 is taken (global mode)
-  - [ ] Test backward compatibility: existing behavior unchanged
+- [x] **`server/cli/commands-phase1.test.js`**
+  - [x] Test `handleStart()` without `new_instance` uses default PID file
+  - [x] Test `handleStart({ new_instance: true })` auto-selects port 3001 if 3000 taken
+  - [x] Test `handleStart({ new_instance: true, port: 3000 })` uses specified port
+  - [x] Test `handleStart()` auto-selects port if 3000 is taken (global mode)
+  - [x] Test backward compatibility: existing behavior unchanged
 
 ### Verification
 
-- [ ] Run unit tests: `npm test`
-- [ ] Run type checks: `npm run tsc`
-- [ ] Run linter: `npm run lint`
-- [ ] Manual test: Start server without `--new-instance`, verify default behavior
-- [ ] Manual test: Start server with `--new-instance --port 3000`, verify port-specific files
+- [x] Run unit tests: `npm test`
+- [x] Run type checks: `npm run tsc`
+- [x] Run linter: `npm run lint`
+- [x] Manual test: Start server without `--new-instance`, verify default behavior
+- [x] Manual test: Start server with `--new-instance` from different folder, verify port-specific files
 
 ## Phase 2: Instance Registry
 
