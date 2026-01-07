@@ -13,11 +13,17 @@ export function printUsage(out_stream) {
     '  restart     Restart the UI server',
     '',
     'Options:',
-    '  -h, --help        Show this help message',
-    '  -d, --debug       Enable debug logging',
-    '      --open        Open the browser after start/restart',
-    '      --host <addr> Bind to a specific host (default: 127.0.0.1)',
-    '      --port <num>  Bind to a specific port (default: 3000)',
+    '  -h, --help           Show this help message',
+    '  -d, --debug          Enable debug logging',
+    '      --open           Open the browser after start/restart',
+    '      --host <addr>    Bind to a specific host (default: 127.0.0.1)',
+    '      --port <num>     Bind to a specific port (default: 3000)',
+    '      --new-instance   Start a new workspace-specific instance',
+    '',
+    'Multi-Instance Usage:',
+    '  bdui start --new-instance    Start workspace instance (auto port)',
+    '  bdui restart                 Restart workspace instance if exists',
+    '  bdui stop                    Stop workspace instance if exists',
     ''
   ];
   for (const line of lines) {
