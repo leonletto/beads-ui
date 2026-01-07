@@ -146,33 +146,33 @@ This checklist implements the simplified multi-instance design:
 - [x] Manual test: Orphaned instance detection and port reuse works
 - [x] Playwright test: All instances verified working on their respective ports
 
-## Phase 3: Smart Restart Command
+## Phase 3: Smart Restart Command ✅
 
 ### Code Changes
 
-- [ ] **`server/cli/commands.js`**
-  - [ ] Update `handleRestart(options)` logic:
-    - [ ] If `port` specified, restart that specific port
-    - [ ] Otherwise, check if instance exists for current workspace
-    - [ ] If workspace instance found, restart that
-    - [ ] Otherwise, fall back to default behavior (global instance)
-  - [ ] Restart = stop (which unregisters) + start (which re-registers)
-  - [ ] **No `--new-instance` flag needed** - automatically detects context!
+- [x] **`server/cli/commands.js`**
+  - [x] Update `handleRestart(options)` logic:
+    - [x] If `port` specified, restart that specific port
+    - [x] Otherwise, check if instance exists for current workspace
+    - [x] If workspace instance found, restart that
+    - [x] Otherwise, fall back to default behavior (global instance)
+  - [x] Restart = stop (which unregisters) + start (which re-registers)
+  - [x] **No `--new-instance` flag needed** - automatically detects context!
 
 ### Tests
 
-- [ ] **`server/cli/commands.integration.test.js`**
-  - [ ] Test `restart` with workspace instance → restarts workspace instance
-  - [ ] Test `restart` without workspace instance → restarts global instance
-  - [ ] Test `restart --port 3000` → restarts specific port
-  - [ ] Test backward compatibility: existing restart behavior unchanged
+- [x] **`server/cli/commands-phase3.test.js`** (new file)
+  - [x] Test `restart` with workspace instance → restarts workspace instance
+  - [x] Test `restart` without workspace instance → restarts global instance
+  - [x] Test `restart --port 3002` → restarts specific port
+  - [x] Test restart when instance not running
 
 ### Verification
 
-- [ ] Run integration tests: `npm test`
-- [ ] Manual test: Start instance with `--new-instance`, then `restart` (no flags) → works
-- [ ] Manual test: Start global instance, then `restart` → works
-- [ ] Manual test: Verify registry entry is updated with new PID after restart
+- [x] Run all tests: `npm test` (81 tests pass)
+- [x] Manual test: Start instance with `--new-instance`, then `restart` (no flags) → works
+- [x] Manual test: Start global instance, then `restart` → works
+- [x] Manual test: Verify registry entry is updated with new PID after restart
 
 ## Phase 4: Testing & Documentation
 
