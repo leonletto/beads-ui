@@ -31,28 +31,35 @@ export async function handleStart(options) {
   const new_instance = options?.new_instance === true;
   let port = options?.port;
 
-  // Check for orphaned instance for current workspace BEFORE cleaning stale instances
-  // This allows us to reuse the port from the orphaned instance
+  // Check for existing instance for current workspace BEFORE cleaning stale instances
   if (new_instance) {
     const cwd = process.cwd();
-    const orphan = findInstanceByWorkspace(cwd);
+    const existing = findInstanceByWorkspace(cwd);
 
-    if (orphan) {
-      // Silently clean up orphaned instance and reuse its port
-      if (!isProcessRunning(orphan.pid)) {
-        removePidFile(orphan.port);
-        unregisterInstance(orphan.port);
-        port = orphan.port;
-        console.log('Reusing port %d from orphaned instance', port);
-      } else {
-        // Instance is still running - this is the expected case
-        console.warn('Server is already running on port %d', orphan.port);
-        if (should_open) {
-          process.env.PORT = String(orphan.port);
-          const { url } = getConfig();
-          await openUrl(url);
+    if (existing) {
+      if (!isProcessRunning(existing.pid)) {
+        // Orphaned instance - clean up and reuse its port if no port specified
+        removePidFile(existing.port);
+        unregisterInstance(existing.port);
+        if (!port) {
+          port = existing.port;
+          console.log('Reusing port %d from orphaned instance', port);
         }
-        return 0;
+      } else {
+        // Instance is still running - stop it first, then start new one
+        console.log('Stopping existing instance on port %d', existing.port);
+        const stopped = await terminateProcess(existing.pid);
+        if (stopped) {
+          removePidFile(existing.port);
+          unregisterInstance(existing.port);
+          // Reuse the port if no port was specified
+          if (!port) {
+            port = existing.port;
+          }
+        } else {
+          console.error('Failed to stop existing instance on port %d', existing.port);
+          return 1;
+        }
       }
     }
   }

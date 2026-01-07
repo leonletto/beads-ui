@@ -137,6 +137,64 @@ describe('handleStart with new_instance flag (Phase 2)', () => {
 
     expect(register_spy).not.toHaveBeenCalled();
   });
+
+  test('stops existing running instance when starting new instance', async () => {
+    vi.spyOn(registry, 'cleanStaleInstances').mockImplementation(() => {});
+    // Existing instance found on port 3002, still running
+    vi.spyOn(registry, 'findInstanceByWorkspace').mockReturnValue({
+      workspace: '/test/workspace',
+      port: 3002,
+      pid: 88888
+    });
+    vi.spyOn(daemon, 'isProcessRunning').mockReturnValue(true);
+    const terminate_spy = vi
+      .spyOn(daemon, 'terminateProcess')
+      .mockResolvedValue(true);
+    vi.spyOn(daemon, 'removePidFile').mockImplementation(() => {});
+    const unregister_spy = vi
+      .spyOn(registry, 'unregisterInstance')
+      .mockImplementation(() => {});
+    vi.spyOn(registry, 'registerInstance').mockImplementation(() => {});
+    vi.spyOn(daemon, 'readPidFile').mockReturnValue(null);
+    vi.spyOn(daemon, 'startDaemon').mockReturnValue({ pid: 12345 });
+    vi.spyOn(daemon, 'printServerUrl').mockImplementation(() => {});
+
+    await handleStart({ new_instance: true, open: false });
+
+    // Should terminate the existing process
+    expect(terminate_spy).toHaveBeenCalledWith(88888);
+    // Should unregister the old instance
+    expect(unregister_spy).toHaveBeenCalledWith(3002);
+  });
+
+  test('reuses port from stopped instance when no port specified', async () => {
+    vi.spyOn(registry, 'cleanStaleInstances').mockImplementation(() => {});
+    // Existing instance found on port 3003, still running
+    vi.spyOn(registry, 'findInstanceByWorkspace').mockReturnValue({
+      workspace: '/test/workspace',
+      port: 3003,
+      pid: 77777
+    });
+    vi.spyOn(daemon, 'isProcessRunning').mockReturnValue(true);
+    vi.spyOn(daemon, 'terminateProcess').mockResolvedValue(true);
+    vi.spyOn(daemon, 'removePidFile').mockImplementation(() => {});
+    vi.spyOn(registry, 'unregisterInstance').mockImplementation(() => {});
+    vi.spyOn(registry, 'registerInstance').mockImplementation(() => {});
+    vi.spyOn(daemon, 'readPidFile').mockReturnValue(null);
+    const start_daemon_spy = vi
+      .spyOn(daemon, 'startDaemon')
+      .mockReturnValue({ pid: 12345 });
+    vi.spyOn(daemon, 'printServerUrl').mockImplementation(() => {});
+
+    await handleStart({ new_instance: true, open: false });
+
+    // Should start daemon on the same port (3003)
+    expect(start_daemon_spy).toHaveBeenCalledWith({
+      port: 3003,
+      host: undefined,
+      is_debug: undefined
+    });
+  });
 });
 
 
