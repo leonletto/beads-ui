@@ -257,3 +257,23 @@ This checklist implements the simplified multi-instance design:
 - Add comprehensive tests for each phase
 - Document any edge cases discovered during implementation
 - Consider adding debug logging for troubleshooting
+
+## Bug Fixes During Development
+
+### jsdom Compatibility Issue (Fixed)
+
+**Problem:** All tests were hanging when running `npm test` (full suite). Tests would timeout after 30 seconds.
+
+**Root Cause:** Compatibility issue between jsdom 27.x and Vitest 4.x. When Vitest 4.x runs tests in the jsdom environment with jsdom version 27, the tests hang indefinitely due to breaking changes introduced in jsdom 27 that are incompatible with Vitest's environment initialization.
+
+**Reference:** Vitest GitHub issue #9279
+
+**Solution:** Downgraded jsdom from version 27.2.0 to version 26.x (`jsdom@^26.0.0`)
+
+**Result:** All 69 test files (291 tests) now pass successfully without hanging.
+
+**Files Changed:**
+
+- `package.json` - Updated jsdom dependency from `^27.2.0` to `^26.0.0`
+
+**Note for PR:** This bug fix should be included in the PR as it was discovered during multi-instance development and affects the entire test suite, not just our new tests.
