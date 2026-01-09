@@ -90,8 +90,7 @@ issue #9279).
 
 - `server/cli/instance-registry.js` - Instance registry implementation
 - `server/cli/instance-registry.test.js` - Registry tests (19 tests)
-- `server/cli/commands-phase2.test.js` - Phase 2 tests (12 tests)
-- `server/cli/commands-phase3.test.js` - Phase 3 tests (4 tests)
+- `server/cli/commands-multi-instance.test.js` - Multi-instance tests (16 tests)
 - `server/cli/commands-list.test.js` - List command tests (6 tests)
 - `dev-docs/*` - Implementation documentation
 
