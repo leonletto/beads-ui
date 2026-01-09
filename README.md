@@ -51,6 +51,9 @@ bdui restart                 # Restarts workspace instance if exists
 
 # Stop workspace instance:
 bdui stop                    # Stops workspace instance if exists
+
+# List all running instances:
+bdui list
 ```
 
 **Key Features:**

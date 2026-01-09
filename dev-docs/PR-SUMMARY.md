@@ -28,6 +28,9 @@ bdui restart
 
 # Stop workspace instance
 bdui stop
+
+# List all running instances
+bdui list
 ```
 
 ## Implementation Details
@@ -55,15 +58,18 @@ bdui stop
 
 - Updated README.md with multi-instance examples
 - Updated CLI help text (`usage.js`)
-- All 68 test files (290 tests) pass
+- Added `bdui list` command for visibility into running instances
+- All 69 test files (296 tests) pass
 - Type checks, linter, prettier all pass
 
 ## Test Coverage
 
-- **Unit tests**: 81 CLI tests covering all new functionality
-- **Integration tests**: Multi-instance lifecycle, orphan cleanup, port conflicts
+- **Unit tests**: 87 CLI tests covering all new functionality
+- **Integration tests**: Multi-instance lifecycle, orphan cleanup, port
+  conflicts
 - **Edge cases**: Registry corruption, stale PIDs, concurrent operations
 - **Backward compatibility**: Verified existing workflows unchanged
+- **List command**: 6 tests for read-only listing functionality
 
 ## Bug Fixes
 
@@ -86,6 +92,7 @@ issue #9279).
 - `server/cli/instance-registry.test.js` - Registry tests (19 tests)
 - `server/cli/commands-phase2.test.js` - Phase 2 tests (12 tests)
 - `server/cli/commands-phase3.test.js` - Phase 3 tests (4 tests)
+- `server/cli/commands-list.test.js` - List command tests (6 tests)
 - `dev-docs/*` - Implementation documentation
 
 ### Modified Files
@@ -122,7 +129,6 @@ Existing users will see zero changes in behavior.
 
 ## Future Enhancements (Optional)
 
-- `bdui list` - Show all running instances
 - `bdui stop --all` - Stop all instances
 
 ## Commits
@@ -145,5 +151,5 @@ npm run lint
 bdui start --new-instance  # Start workspace instance
 bdui restart               # Restart workspace instance
 bdui stop                  # Stop workspace instance
+bdui list                  # List all instances
 ```
-
