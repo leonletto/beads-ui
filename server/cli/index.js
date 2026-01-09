@@ -1,5 +1,5 @@
 import { enableAllDebug } from '../logging.js';
-import { handleRestart, handleStart, handleStop } from './commands.js';
+import { handleList, handleRestart, handleStart, handleStop } from './commands.js';
 import { printUsage } from './usage.js';
 
 /**
@@ -47,7 +47,7 @@ export function parseArgs(args) {
     }
     if (
       !command &&
-      (token === 'start' || token === 'stop' || token === 'restart')
+      (token === 'start' || token === 'stop' || token === 'restart' || token === 'list')
     ) {
       command = token;
       continue;
@@ -109,6 +109,9 @@ export async function main(args) {
       port: options.port
     };
     return await handleRestart(restart_options);
+  }
+  if (command === 'list') {
+    return await handleList();
   }
 
   // Unknown command path (should not happen due to parseArgs guard)

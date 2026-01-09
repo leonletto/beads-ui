@@ -1,3 +1,4 @@
+import os from 'node:os';
 import { getConfig } from '../config.js';
 import { resolveDbPath } from '../db.js';
 import {
@@ -12,6 +13,7 @@ import {
 import {
   cleanStaleInstances,
   findInstanceByWorkspace,
+  readInstanceRegistry,
   registerInstance,
   unregisterInstance
 } from './instance-registry.js';
@@ -249,4 +251,52 @@ export async function handleRestart(options = {}) {
 
   const start_code = await handleStart(start_options);
   return start_code === 0 ? 0 : 1;
+}
+
+/**
+ * Handle `list` command: show all running instances.
+ * Displays both the global instance (if running) and all workspace instances.
+ * This is a read-only operation - does not modify the registry.
+ *
+ * @returns {Promise<number>} Exit code (always 0)
+ */
+export async function handleList() {
+  const instances = readInstanceRegistry();
+  const config = getConfig();
+  const default_port = config.port;
+  const global_pid = readPidFile(undefined); // Default instance (no port)
+
+  // Print header
+  console.log('TYPE       PORT   PID      WORKSPACE');
+  console.log('─'.repeat(75));
+
+  let has_running = false;
+
+  // Show global instance if running
+  if (global_pid && isProcessRunning(global_pid)) {
+    console.log(
+      `global     ${String(default_port).padEnd(6)} ${String(global_pid).padEnd(8)} -`
+    );
+    has_running = true;
+  }
+
+  // Show workspace instances (including stale ones with status)
+  for (const inst of instances) {
+    const is_running = isProcessRunning(inst.pid);
+    const workspace = inst.workspace.replace(os.homedir(), '~');
+    const status = is_running ? '' : ' (stale)';
+    console.log(
+      `workspace  ${String(inst.port).padEnd(6)} ${String(inst.pid).padEnd(8)} ${workspace}${status}`
+    );
+    if (is_running) {
+      has_running = true;
+    }
+  }
+
+  // Show message if no instances running
+  if (!has_running) {
+    console.log('No instances running');
+  }
+
+  return 0;
 }

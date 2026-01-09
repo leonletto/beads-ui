@@ -11,6 +11,7 @@ export function printUsage(out_stream) {
     '  start       Start the UI server',
     '  stop        Stop the UI server',
     '  restart     Restart the UI server',
+    '  list        List all running instances',
     '',
     'Options:',
     '  -h, --help           Show this help message',
