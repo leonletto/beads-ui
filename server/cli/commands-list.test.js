@@ -4,6 +4,7 @@ import * as daemon from './daemon.js';
 import * as registry from './instance-registry.js';
 
 describe('handleList command', () => {
+  /** @type {any} */
   let console_log_spy;
 
   beforeEach(() => {
@@ -33,7 +34,9 @@ describe('handleList command', () => {
     const code = await handleList();
 
     expect(code).toBe(0);
-    const output = console_log_spy.mock.calls.map((call) => call[0]).join('\n');
+    const output = console_log_spy.mock.calls
+      .map((/** @type {any[]} */ call) => call[0])
+      .join('\n');
     expect(output).toContain('global');
     expect(output).toContain('1234');
   });
@@ -49,7 +52,9 @@ describe('handleList command', () => {
     const code = await handleList();
 
     expect(code).toBe(0);
-    const output = console_log_spy.mock.calls.map((call) => call[0]).join('\n');
+    const output = console_log_spy.mock.calls
+      .map((/** @type {any[]} */ call) => call[0])
+      .join('\n');
     expect(output).toContain('workspace');
     expect(output).toContain('3001');
     expect(output).toContain('5678');
@@ -67,7 +72,9 @@ describe('handleList command', () => {
     const code = await handleList();
 
     expect(code).toBe(0);
-    const output = console_log_spy.mock.calls.map((call) => call[0]).join('\n');
+    const output = console_log_spy.mock.calls
+      .map((/** @type {any[]} */ call) => call[0])
+      .join('\n');
     expect(output).toContain('global');
     expect(output).toContain('1234');
     expect(output).toContain('workspace');
@@ -86,7 +93,9 @@ describe('handleList command', () => {
     const code = await handleList();
 
     expect(code).toBe(0);
-    const output = console_log_spy.mock.calls.map((call) => call[0]).join('\n');
+    const output = console_log_spy.mock.calls
+      .map((/** @type {any[]} */ call) => call[0])
+      .join('\n');
     expect(output).toContain('3001');
     expect(output).toContain('5678');
     expect(output).toContain('3002');
