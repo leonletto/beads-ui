@@ -54,6 +54,7 @@ export async function handleStart(options) {
       console.log('Workspace registered: %s', cwd);
     }
     console.warn('Server is already running.');
+    console.log('beads ui   listening on %s', url);
     if (should_open) {
       await openUrl(url);
     }
@@ -87,6 +88,7 @@ export async function handleStart(options) {
       const registered = await registerCurrentWorkspace(existing_url, cwd);
       if (registered) {
         console.log('Workspace registered with existing server: %s', cwd);
+        console.log('beads ui   listening on %s', existing_url);
         if (should_open) {
           await openUrl(existing_url);
         }
@@ -124,6 +126,7 @@ export async function handleStart(options) {
           'Daemon exited early; registered workspace with existing server: %s',
           cwd
         );
+        console.log('beads ui   listening on %s', url);
         return 0;
       }
       return 1;
